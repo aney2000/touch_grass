@@ -31,6 +31,19 @@ export function smoothstep(edgeA, edgeB, value) {
   return amount * amount * (3 - 2 * amount);
 }
 
+// A shooting star travelling in a straight line, fading in then out over its lifetime.
+export function shootingStarAt(star, now) {
+  const progress = clamp((now - star.bornAt) / star.duration, 0, 1);
+  const distance = progress * star.length;
+  return {
+    progress,
+    x: star.x + Math.cos(star.angle) * distance,
+    y: star.y + Math.sin(star.angle) * distance,
+    opacity: Math.sin(progress * Math.PI),
+    done: now >= star.bornAt + star.duration,
+  };
+}
+
 // Horizontal displacement of a grass blade tip: a slow idle sway plus any passing wind gusts,
 // clamped so a blade never bends past a believable limit.
 export function grassBend(blade, { gusts = [], height, now, motionScale = 1 } = {}) {
