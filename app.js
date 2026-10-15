@@ -1,4 +1,4 @@
-import { randomGenerator, mixHex, blendColor, smoothstep, twilightAmount, cubicBezier, highestPoint, fireflyAt, shootingStarAt, grassBend } from "./src/scene-math.js";
+import { randomGenerator, clamp, mixHex, smoothstep, twilightAmount, cubicBezier, highestPoint, fireflyAt, shootingStarAt, grassBend } from "./src/scene-math.js";
 
 const scene = document.querySelector(".scene");
 const canvas = document.querySelector("#meadow");
@@ -37,6 +37,10 @@ let targetNight = 0;
 let elapsed = 0;
 let previousFrame = 0;
 let lastClockMinute = "";
+// Day/night is an explicit eased tween so the sunrise/sunset is always visible.
+const DAY_NIGHT_MS = 4200;
+let transitionFrom = 0;
+let transitionStart = -Infinity;
 const gusts = [];
 const stars = [];
 const fireflies = [];
@@ -70,7 +74,7 @@ function makeField() {
     const swatch = Math.floor(random() * dayPalette.grass.length);
     return {
       x: random() * width,
-      height: (foreground ? 0.035 : 0.018) + random() * (foreground ? 0.083 : 0.052),
+      height: (foreground ? 0.026 : 0.014) + random() * (foreground ? 0.058 : 0.036),
       width: 0.7 + random() * (foreground ? 1.7 : 1.1),
       phase: random() * Math.PI * 2,
       layer: foreground ? 1 : 0,
@@ -80,10 +84,10 @@ function makeField() {
   });
 
   stars.length = 0;
-  for (let index = 0; index < 110; index += 1) {
+  for (let index = 0; index < 150; index += 1) {
     stars.push({
-      x: 0.46 + random() * 0.55,
-      y: 0.035 + random() * 0.52,
+      x: 0.02 + random() * 0.96,
+      y: 0.02 + random() * 0.6,
       size: 0.6 + random() * 1.5,
       phase: random() * Math.PI * 2,
       brightness: 0.4 + random() * 0.6,
@@ -131,22 +135,6 @@ function computeTreeCrest() {
     samples.push({ x, y: cubicBezier(cy[0], cy[1], cy[2], cy[3], t) * height });
   }
   treeCrest = highestPoint(samples);
-}
-
-function skyColorAt(y) {
-  const amount = Math.max(0, Math.min(1, y / height));
-  if (amount < 0.67) {
-    return blendColor(
-      mixHex(dayPalette.skyTop, nightPalette.skyTop, dayAmount),
-      mixHex(dayPalette.skyMid, nightPalette.skyMid, dayAmount),
-      amount / 0.67,
-    );
-  }
-  return blendColor(
-    mixHex(dayPalette.skyMid, nightPalette.skyMid, dayAmount),
-    mixHex(dayPalette.horizon, nightPalette.horizon, dayAmount),
-    (amount - 0.67) / 0.33,
-  );
 }
 
 function drawSky() {
@@ -308,20 +296,37 @@ function drawSunAndMoon() {
     context.globalAlpha = 1;
   }
 
-  const moonX = width * 0.79;
-  const moonY = height * (0.68 - dayAmount * 0.45);
+  const moonX = width * 0.78;
+  const moonY = height * (0.64 - dayAmount * 0.4);
   const moonVisibility = smoothstep(0.12, 0.82, dayAmount);
   if (moonVisibility > 0.005) {
+    const moonR = Math.max(20, Math.min(34, width * 0.028));
+    context.save();
     context.globalAlpha = moonVisibility;
-    context.fillStyle = "#f4edcc";
+
+    const glow = context.createRadialGradient(moonX, moonY, moonR, moonX, moonY, moonR * 4.4);
+    glow.addColorStop(0, "rgba(234,239,214,0.45)");
+    glow.addColorStop(1, "rgba(234,239,214,0)");
+    context.fillStyle = glow;
     context.beginPath();
-    context.arc(moonX, moonY, 23, 0, Math.PI * 2);
+    context.arc(moonX, moonY, moonR * 4.4, 0, Math.PI * 2);
     context.fill();
-    context.fillStyle = skyColorAt(moonY - 12);
+
+    const disc = context.createRadialGradient(moonX - moonR * 0.32, moonY - moonR * 0.32, moonR * 0.2, moonX, moonY, moonR);
+    disc.addColorStop(0, "#fbf7df");
+    disc.addColorStop(1, "#d8d2ac");
+    context.fillStyle = disc;
     context.beginPath();
-    context.arc(moonX + 12, moonY - 7, 22, 0, Math.PI * 2);
+    context.arc(moonX, moonY, moonR, 0, Math.PI * 2);
     context.fill();
-    context.globalAlpha = 1;
+
+    context.fillStyle = "rgba(181,176,142,0.45)";
+    for (const [cx, cy, cr] of [[-0.32, -0.1, 0.16], [0.28, 0.16, 0.2], [0.08, -0.36, 0.12], [-0.12, 0.34, 0.1]]) {
+      context.beginPath();
+      context.arc(moonX + cx * moonR, moonY + cy * moonR, cr * moonR, 0, Math.PI * 2);
+      context.fill();
+    }
+    context.restore();
   }
 }
 
@@ -345,7 +350,6 @@ function drawCloud(cloud, visibility, color) {
 }
 
 function drawHills() {
-  context.fillStyle = mixHex(dayPalette.farHill, nightPalette.farHill, dayAmount);
   context.beginPath();
   context.moveTo(0, height * 0.72);
   context.bezierCurveTo(width * 0.13, height * 0.58, width * 0.32, height * 0.75, width * 0.52, height * 0.67);
@@ -353,9 +357,10 @@ function drawHills() {
   context.lineTo(width, height);
   context.lineTo(0, height);
   context.closePath();
+  context.fillStyle = mixHex(dayPalette.farHill, nightPalette.farHill, dayAmount);
   context.fill();
+  shadeHill(height * 0.56, 0.08, 0.1);
 
-  context.fillStyle = mixHex(dayPalette.nearHill, nightPalette.nearHill, dayAmount);
   context.beginPath();
   context.moveTo(0, height * 0.76);
   context.bezierCurveTo(width * 0.2, height * 0.67, width * 0.4, height * 0.8, width * 0.62, height * 0.72);
@@ -363,9 +368,10 @@ function drawHills() {
   context.lineTo(width, height);
   context.lineTo(0, height);
   context.closePath();
+  context.fillStyle = mixHex(dayPalette.nearHill, nightPalette.nearHill, dayAmount);
   context.fill();
+  shadeHill(height * 0.66, 0.1, 0.15);
 
-  context.fillStyle = mixHex(dayPalette.frontHill, nightPalette.frontHill, dayAmount);
   context.beginPath();
   context.moveTo(0, height * 0.82);
   context.bezierCurveTo(width * 0.25, height * 0.72, width * 0.5, height * 0.86, width * 0.74, height * 0.78);
@@ -373,7 +379,48 @@ function drawHills() {
   context.lineTo(width, height);
   context.lineTo(0, height);
   context.closePath();
+  context.fillStyle = mixHex(dayPalette.frontHill, nightPalette.frontHill, dayAmount);
   context.fill();
+  shadeHill(height * 0.74, 0.12, 0.22);
+}
+
+// Clip to the last-filled hill and lay a crest highlight over a base shadow for volume.
+function shadeHill(crestY, lightAlpha, shadowAlpha) {
+  context.save();
+  context.clip();
+  const shade = context.createLinearGradient(0, crestY, 0, height);
+  shade.addColorStop(0, `rgba(255,255,255,${lightAlpha})`);
+  shade.addColorStop(0.32, "rgba(255,255,255,0)");
+  shade.addColorStop(0.72, "rgba(0,0,0,0)");
+  shade.addColorStop(1, `rgba(0,0,0,${shadowAlpha})`);
+  context.fillStyle = shade;
+  context.fillRect(0, crestY, width, height - crestY);
+  context.restore();
+}
+
+// Blend two hex colours by the current day amount and apply an alpha.
+function tintRgba(dayHex, nightHex, alpha) {
+  return mixHex(dayHex, nightHex, dayAmount).replace("rgb(", "rgba(").replace(")", `,${alpha})`);
+}
+
+// Soft atmospheric band just above the hills so the distance reads hazier.
+function drawHaze() {
+  const band = context.createLinearGradient(0, height * 0.48, 0, height * 0.72);
+  band.addColorStop(0, tintRgba("#eef2e6", "#2b3b52", 0));
+  band.addColorStop(1, tintRgba("#eef2e6", "#2b3b52", 0.3));
+  context.fillStyle = band;
+  context.fillRect(0, height * 0.48, width, height * 0.24);
+}
+
+// A gentle darkening toward the edges to frame the scene with depth.
+function drawVignette() {
+  const inner = Math.min(width, height) * 0.3;
+  const outer = Math.max(width, height) * 0.78;
+  const v = context.createRadialGradient(width / 2, height * 0.52, inner, width / 2, height * 0.6, outer);
+  v.addColorStop(0, "rgba(0,0,0,0)");
+  v.addColorStop(1, "rgba(0,0,0,0.18)");
+  context.fillStyle = v;
+  context.fillRect(0, 0, width, height);
 }
 
 // A lone, stylised tree rooted on the hill crest, swaying gently with the breeze.
@@ -465,9 +512,9 @@ function render(now = 0) {
   const delta = Math.min(48, now - previousFrame || 16);
   previousFrame = now;
   elapsed += delta;
-  const transitionSpeed = reducedMotion.matches ? 1 : 1 - Math.exp(-delta / 2300);
-  dayAmount += (targetNight - dayAmount) * transitionSpeed;
-  if (Math.abs(targetNight - dayAmount) < 0.001) dayAmount = targetNight;
+  const duration = reducedMotion.matches ? 1100 : DAY_NIGHT_MS;
+  const progress = clamp((now - transitionStart) / duration, 0, 1);
+  dayAmount = transitionFrom + (targetNight - transitionFrom) * smoothstep(0, 1, progress);
 
   context.clearRect(0, 0, width, height);
   drawSky();
@@ -478,10 +525,12 @@ function render(now = 0) {
   drawSunAndMoon();
   for (const cloud of clouds) drawCloud(cloud, 1 - smoothstep(0.12, 0.9, dayAmount), mixHex("#fffdf3", "#9fb2b4", dayAmount));
   for (const cloud of nightClouds) drawCloud(cloud, smoothstep(0.45, 0.98, dayAmount) * 0.42, "#38475f");
+  drawHaze();
   drawHills();
   drawTree(now);
   drawGrass(now);
   drawFireflies(now);
+  drawVignette();
 
   const currentThemeColor = mixHex(dayPalette.skyTop, nightPalette.skyTop, dayAmount);
   themeColor.setAttribute("content", currentThemeColor);
@@ -526,6 +575,8 @@ canvas.addEventListener("pointerleave", () => {
 
 toggle.addEventListener("click", () => {
   targetNight = targetNight ? 0 : 1;
+  transitionFrom = dayAmount;
+  transitionStart = performance.now();
   toggle.setAttribute("aria-pressed", String(targetNight === 1));
   toggleLabel.textContent = targetNight ? "Let morning in" : "Let night fall";
   scene.classList.toggle("scene--night", targetNight === 1);
