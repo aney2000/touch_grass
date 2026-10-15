@@ -31,6 +31,17 @@ export function smoothstep(edgeA, edgeB, value) {
   return amount * amount * (3 - 2 * amount);
 }
 
+// A single axis of a cubic Bézier curve, used to sample the hill silhouette.
+export function cubicBezier(p0, p1, p2, p3, t) {
+  const u = 1 - t;
+  return u * u * u * p0 + 3 * u * u * t * p1 + 3 * u * t * t * p2 + t * t * t * p3;
+}
+
+// The visually highest point of a sampled curve (smallest y); ties keep the first.
+export function highestPoint(points) {
+  return points.reduce((best, point) => (point.y < best.y ? point : best));
+}
+
 // A firefly wandering on two gentle sine paths while its glow pulses between 0 and 1.
 export function fireflyAt(fly, now) {
   return {
