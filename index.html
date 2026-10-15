@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#8fcdf2">
+    <meta name="description" content="A quiet little field to visit whenever you need a moment outside.">
+    <title>Stillfield | A little moment outside</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <main class="scene" aria-label="An interactive, animated meadow">
+      <canvas class="scene__canvas" id="meadow" aria-label="A rolling green meadow under a changing sky">
+        An animated meadow with a changing sky and moving grass.
+      </canvas>
+
+      <header class="masthead">
+        <a class="wordmark" href="#home" aria-label="Stillfield home">
+          <span class="wordmark__mark" aria-hidden="true"></span>
+          <span>stillfield</span>
+        </a>
+        <p class="masthead__note">a little moment outside</p>
+      </header>
+
+      <section class="scene-title" aria-label="The field">
+        <p class="scene-title__eyebrow" id="sky-label">FIELD NOTES &nbsp; / &nbsp; NO. 01</p>
+        <h1>Take a moment.</h1>
+      </section>
+
+      <footer class="scene-controls">
+        <p class="scene-clock" id="scene-clock" aria-live="off">12:00 <span>PM</span></p>
+        <button class="scene-toggle" id="scene-toggle" type="button" aria-pressed="false">
+          <span class="scene-toggle__icon" aria-hidden="true"></span>
+          <span class="scene-toggle__label">Let night fall</span>
+        </button>
+      </footer>
+    </main>
+    <noscript>This little field needs JavaScript to move. It will be here when you're ready.</noscript>
+  </body>
+</html>
