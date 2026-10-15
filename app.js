@@ -48,6 +48,11 @@ const clouds = [
   { x: 0.67, y: 0.28, scale: 0.94, speed: 0.003 },
   { x: 0.9, y: 0.15, scale: 0.52, speed: 0.005 },
 ];
+const nightClouds = [
+  { x: 0.2, y: 0.17, scale: 0.7, speed: 0.0024 },
+  { x: 0.55, y: 0.1, scale: 0.95, speed: 0.0017 },
+  { x: 0.82, y: 0.23, scale: 0.6, speed: 0.0031 },
+];
 
 // Control points (as fractions of width/height) of the far hill's upper arc,
 // mirroring drawHills so the tree can sit on that sky-lit crest.
@@ -320,17 +325,16 @@ function drawSunAndMoon() {
   }
 }
 
-function drawCloud(cloud) {
+function drawCloud(cloud, visibility, color) {
+  if (visibility <= 0.004) return;
   const drift = elapsed * cloud.speed * (reducedMotion.matches ? 0.2 : 1);
   const cloudWidth = height * 0.23 * cloud.scale;
-  const wrappedX = ((cloud.x * width + drift) % (width + cloudWidth * 2)) - cloudWidth;
-  const x = wrappedX;
+  const x = ((cloud.x * width + drift) % (width + cloudWidth * 2)) - cloudWidth;
   const y = height * cloud.y;
   const scale = height * 0.047 * cloud.scale;
-  const visibility = 1 - smoothstep(0.12, 0.9, dayAmount);
 
   context.globalAlpha = visibility * 0.83;
-  context.fillStyle = mixHex("#fffdf3", "#9fb2b4", dayAmount);
+  context.fillStyle = color;
   context.beginPath();
   context.ellipse(x, y, scale * 1.52, scale * 0.57, 0, 0, Math.PI * 2);
   context.ellipse(x - scale * 0.53, y - scale * 0.21, scale * 0.65, scale * 0.47, 0, 0, Math.PI * 2);
@@ -472,7 +476,8 @@ function render(now = 0) {
   maybeSpawnShootingStar(now);
   drawShootingStars(now);
   drawSunAndMoon();
-  for (const cloud of clouds) drawCloud(cloud);
+  for (const cloud of clouds) drawCloud(cloud, 1 - smoothstep(0.12, 0.9, dayAmount), mixHex("#fffdf3", "#9fb2b4", dayAmount));
+  for (const cloud of nightClouds) drawCloud(cloud, smoothstep(0.45, 0.98, dayAmount) * 0.42, "#38475f");
   drawHills();
   drawTree(now);
   drawGrass(now);
