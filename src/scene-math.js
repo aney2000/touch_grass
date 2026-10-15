@@ -31,6 +31,11 @@ export function smoothstep(edgeA, edgeB, value) {
   return amount * amount * (3 - 2 * amount);
 }
 
+// Warm sunrise/sunset glow strength: 0 in full day or night, peaking mid-transition.
+export function twilightAmount(dayAmount) {
+  return Math.sin(clamp(dayAmount, 0, 1) * Math.PI);
+}
+
 // A single axis of a cubic Bézier curve, used to sample the hill silhouette.
 export function cubicBezier(p0, p1, p2, p3, t) {
   const u = 1 - t;
