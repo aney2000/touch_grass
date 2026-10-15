@@ -1,4 +1,4 @@
-import { randomGenerator, mixHex, blendColor, smoothstep, grassBend } from "./src/scene-math.js";
+import { randomGenerator, mixHex, blendColor, smoothstep, twilightAmount, grassBend } from "./src/scene-math.js";
 
 const scene = document.querySelector(".scene");
 const canvas = document.querySelector("#meadow");
@@ -119,6 +119,28 @@ function drawSky() {
   context.fillRect(0, 0, width, height);
 }
 
+// Warm sunrise/sunset wash: a halo around the low sun plus a glow along the horizon.
+function drawTwilightGlow() {
+  const warmth = twilightAmount(dayAmount);
+  if (warmth <= 0.004) return;
+
+  const sunX = width * (0.31 - dayAmount * 0.13);
+  const sunY = height * (0.22 + dayAmount * 0.49);
+  const halo = context.createRadialGradient(sunX, sunY, 2, sunX, sunY, height * 0.55);
+  halo.addColorStop(0, `rgba(255,196,120,${0.42 * warmth})`);
+  halo.addColorStop(0.5, `rgba(255,151,88,${0.2 * warmth})`);
+  halo.addColorStop(1, "rgba(255,138,86,0)");
+  context.fillStyle = halo;
+  context.fillRect(0, 0, width, height);
+
+  const band = context.createLinearGradient(0, height * 0.4, 0, height * 0.78);
+  band.addColorStop(0, "rgba(255,150,86,0)");
+  band.addColorStop(0.6, `rgba(255,139,74,${0.22 * warmth})`);
+  band.addColorStop(1, `rgba(255,103,92,${0.32 * warmth})`);
+  context.fillStyle = band;
+  context.fillRect(0, height * 0.4, width, height * 0.38);
+}
+
 function drawStars() {
   const visibility = smoothstep(0.16, 0.9, dayAmount);
   if (visibility <= 0.005) return;
@@ -152,7 +174,7 @@ function drawSunAndMoon() {
     context.fillStyle = sunGlow;
     context.fillRect(sunX - sunRadius * 4, sunY - sunRadius * 4, sunRadius * 8, sunRadius * 8);
     context.globalAlpha = sunVisibility;
-    context.fillStyle = "#fff0b6";
+    context.fillStyle = mixHex("#fff0b6", "#ff9e5a", twilightAmount(dayAmount));
     context.beginPath();
     context.arc(sunX, sunY, sunRadius, 0, Math.PI * 2);
     context.fill();
@@ -267,6 +289,7 @@ function render(now = 0) {
 
   context.clearRect(0, 0, width, height);
   drawSky();
+  drawTwilightGlow();
   drawStars();
   drawSunAndMoon();
   for (const cloud of clouds) drawCloud(cloud);
