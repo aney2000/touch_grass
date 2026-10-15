@@ -1,0 +1,11 @@
+{
+  "name": "stillfield",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A quiet interactive meadow you can touch.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "serve": "python3 -m http.server 5173"
+  }
+}
