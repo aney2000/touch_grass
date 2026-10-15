@@ -31,6 +31,15 @@ export function smoothstep(edgeA, edgeB, value) {
   return amount * amount * (3 - 2 * amount);
 }
 
+// A firefly wandering on two gentle sine paths while its glow pulses between 0 and 1.
+export function fireflyAt(fly, now) {
+  return {
+    x: fly.x + Math.sin(now * fly.driftSpeed + fly.phase) * fly.driftX,
+    y: fly.y + Math.cos(now * fly.driftSpeed * 0.8 + fly.phase) * fly.driftY,
+    glow: (Math.sin(now * fly.glowSpeed + fly.phase) + 1) / 2,
+  };
+}
+
 // A shooting star travelling in a straight line, fading in then out over its lifetime.
 export function shootingStarAt(star, now) {
   const progress = clamp((now - star.bornAt) / star.duration, 0, 1);
