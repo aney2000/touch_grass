@@ -1,4 +1,4 @@
-import { randomGenerator, mixHex, blendColor, smoothstep, twilightAmount, grassBend } from "./src/scene-math.js";
+import { randomGenerator, mixHex, blendColor, smoothstep, twilightAmount, cubicBezier, highestPoint, grassBend } from "./src/scene-math.js";
 
 const scene = document.querySelector(".scene");
 const canvas = document.querySelector("#meadow");
@@ -46,6 +46,14 @@ const clouds = [
   { x: 0.9, y: 0.15, scale: 0.52, speed: 0.005 },
 ];
 
+// Control points (as fractions of width/height) of the front hill's first arc,
+// mirroring drawHills so the tree can sit on that crest.
+const FRONT_HILL_SEGMENT = {
+  x: [0, 0.25, 0.5, 0.74],
+  y: [0.82, 0.72, 0.86, 0.78],
+};
+let treeCrest = { x: 0, y: 0 };
+
 function makeField() {
   const random = randomGenerator(741);
   const count = Math.min(1500, Math.ceil(width * 0.78));
@@ -86,6 +94,21 @@ function resizeCanvas() {
   canvas.style.height = `${height}px`;
   context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
   makeField();
+  computeTreeCrest();
+}
+
+// Sample the front hill's first arc and keep its visually highest point for the tree.
+function computeTreeCrest() {
+  const { x: cx, y: cy } = FRONT_HILL_SEGMENT;
+  const samples = [];
+  for (let i = 0; i <= 48; i += 1) {
+    const t = i / 48;
+    samples.push({
+      x: cubicBezier(cx[0], cx[1], cx[2], cx[3], t) * width,
+      y: cubicBezier(cy[0], cy[1], cy[2], cy[3], t) * height,
+    });
+  }
+  treeCrest = highestPoint(samples);
 }
 
 function skyColorAt(y) {
@@ -250,6 +273,62 @@ function drawHills() {
   context.fill();
 }
 
+// A lone, stylised tree rooted on the hill crest, swaying gently with the breeze.
+function drawTree(now) {
+  const { x, y } = treeCrest;
+  const sway = reducedMotion.matches ? 0 : Math.sin(now * 0.0006) * 2.2;
+  const trunkHeight = height * 0.075;
+  const trunkWidth = Math.max(4, height * 0.0085);
+  const canopyR = height * 0.055;
+  const canopyY = y - trunkHeight * 0.74;
+  const cx = x + sway;
+
+  context.save();
+
+  // Soft ground shadow.
+  context.globalAlpha = 0.16;
+  context.fillStyle = "#17271b";
+  context.beginPath();
+  context.ellipse(x, y + height * 0.004, canopyR * 0.85, canopyR * 0.2, 0, 0, Math.PI * 2);
+  context.fill();
+  context.globalAlpha = 1;
+
+  // Trunk, leaning slightly with the sway.
+  context.strokeStyle = mixHex("#5b4327", "#2a2320", dayAmount);
+  context.lineWidth = trunkWidth;
+  context.lineCap = "round";
+  context.beginPath();
+  context.moveTo(x, y);
+  context.quadraticCurveTo(x + sway * 0.3, canopyY + canopyR * 0.5, cx, canopyY);
+  context.stroke();
+
+  // Layered canopy blobs for a soft, rounded crown.
+  const foliage = mixHex("#4b8a3f", "#20402e", dayAmount);
+  const blobs = [
+    [-canopyR * 0.62, canopyR * 0.2, canopyR * 0.7],
+    [canopyR * 0.62, canopyR * 0.2, canopyR * 0.68],
+    [0, canopyR * 0.38, canopyR * 0.82],
+    [-canopyR * 0.28, -canopyR * 0.34, canopyR * 0.72],
+    [canopyR * 0.32, -canopyR * 0.3, canopyR * 0.7],
+    [0, -canopyR * 0.05, canopyR * 0.96],
+  ];
+  context.fillStyle = foliage;
+  for (const [dx, dy, r] of blobs) {
+    context.beginPath();
+    context.arc(cx + dx, canopyY + dy, r, 0, Math.PI * 2);
+    context.fill();
+  }
+
+  // A lighter highlight on the sky-facing side.
+  context.globalAlpha = 0.5;
+  context.fillStyle = mixHex("#69aa4d", "#2c5338", dayAmount);
+  context.beginPath();
+  context.arc(cx - canopyR * 0.22, canopyY - canopyR * 0.36, canopyR * 0.5, 0, Math.PI * 2);
+  context.fill();
+
+  context.restore();
+}
+
 function drawGrass(now) {
   for (const blade of field) {
     const baseY = height * (0.746 + Math.sin((blade.x / Math.max(width, 1)) * 8 + blade.phase) * 0.022);
@@ -294,6 +373,7 @@ function render(now = 0) {
   drawSunAndMoon();
   for (const cloud of clouds) drawCloud(cloud);
   drawHills();
+  drawTree(now);
   drawGrass(now);
 
   const currentThemeColor = mixHex(dayPalette.skyTop, nightPalette.skyTop, dayAmount);
