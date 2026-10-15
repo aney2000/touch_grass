@@ -15,6 +15,11 @@
         An animated meadow with a changing sky and moving grass.
       </canvas>
 
+      <p class="sr-only">
+        Move your cursor across the grass to stir the breeze. Use the button below, or press the
+        N key, to switch between day and night.
+      </p>
+
       <header class="masthead">
         <a class="wordmark" href="#home" aria-label="Stillfield home">
           <span class="wordmark__mark" aria-hidden="true"></span>
@@ -32,9 +37,11 @@
         <p class="scene-clock" id="scene-clock" aria-live="off">12:00 <span>PM</span></p>
         <button class="scene-toggle" id="scene-toggle" type="button" aria-pressed="false">
           <span class="scene-toggle__icon" aria-hidden="true"></span>
-          <span class="scene-toggle__label">Let night fall</span>
+          <span class="scene-toggle__label" aria-live="polite">Let night fall</span>
         </button>
       </footer>
+
+      <p class="scene-hint" aria-hidden="true">Brush the grass &middot; press <kbd>N</kbd> for night</p>
     </main>
     <noscript>This little field needs JavaScript to move. It will be here when you're ready.</noscript>
   </body>
