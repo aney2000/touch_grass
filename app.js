@@ -1,4 +1,4 @@
-import { randomGenerator, mixHex, blendColor, smoothstep, twilightAmount, cubicBezier, highestPoint, grassBend } from "./src/scene-math.js";
+import { randomGenerator, mixHex, blendColor, smoothstep, twilightAmount, cubicBezier, highestPoint, fireflyAt, shootingStarAt, grassBend } from "./src/scene-math.js";
 
 const scene = document.querySelector(".scene");
 const canvas = document.querySelector("#meadow");
@@ -39,6 +39,9 @@ let previousFrame = 0;
 let lastClockMinute = "";
 const gusts = [];
 const stars = [];
+const fireflies = [];
+const shootingStars = [];
+let nextStarAt = 0;
 const clouds = [
   { x: 0.08, y: 0.2, scale: 0.8, speed: 0.004 },
   { x: 0.39, y: 0.12, scale: 0.58, speed: 0.006 },
@@ -46,11 +49,11 @@ const clouds = [
   { x: 0.9, y: 0.15, scale: 0.52, speed: 0.005 },
 ];
 
-// Control points (as fractions of width/height) of the front hill's first arc,
-// mirroring drawHills so the tree can sit on that crest.
-const FRONT_HILL_SEGMENT = {
-  x: [0, 0.25, 0.5, 0.74],
-  y: [0.82, 0.72, 0.86, 0.78],
+// Control points (as fractions of width/height) of the far hill's upper arc,
+// mirroring drawHills so the tree can sit on that sky-lit crest.
+const TREE_HILL_CURVE = {
+  x: [0.52, 0.72, 0.88, 1.0],
+  y: [0.67, 0.58, 0.66, 0.56],
 };
 let treeCrest = { x: 0, y: 0 };
 
@@ -81,6 +84,20 @@ function makeField() {
       brightness: 0.4 + random() * 0.6,
     });
   }
+
+  fireflies.length = 0;
+  for (let index = 0; index < 26; index += 1) {
+    fireflies.push({
+      x: random() * width,
+      y: height * (0.56 + random() * 0.2),
+      driftX: height * (0.01 + random() * 0.03),
+      driftY: height * (0.008 + random() * 0.02),
+      driftSpeed: 0.0004 + random() * 0.0006,
+      glowSpeed: 0.001 + random() * 0.0018,
+      phase: random() * Math.PI * 2,
+      size: 1 + random() * 1.6,
+    });
+  }
 }
 
 function resizeCanvas() {
@@ -97,16 +114,16 @@ function resizeCanvas() {
   computeTreeCrest();
 }
 
-// Sample the front hill's first arc and keep its visually highest point for the tree.
+// Sample the far hill's upper arc and keep its highest point within an
+// off-edge window, so the tree sits on a sky-lit crest rather than a corner.
 function computeTreeCrest() {
-  const { x: cx, y: cy } = FRONT_HILL_SEGMENT;
+  const { x: cx, y: cy } = TREE_HILL_CURVE;
   const samples = [];
   for (let i = 0; i <= 48; i += 1) {
     const t = i / 48;
-    samples.push({
-      x: cubicBezier(cx[0], cx[1], cx[2], cx[3], t) * width,
-      y: cubicBezier(cy[0], cy[1], cy[2], cy[3], t) * height,
-    });
+    const x = cubicBezier(cx[0], cx[1], cx[2], cx[3], t) * width;
+    if (x < width * 0.5 || x > width * 0.8) continue;
+    samples.push({ x, y: cubicBezier(cy[0], cy[1], cy[2], cy[3], t) * height });
   }
   treeCrest = highestPoint(samples);
 }
@@ -182,6 +199,88 @@ function drawStars() {
     }
   }
   context.globalAlpha = 1;
+}
+
+// Occasional meteors streaking across the night sky.
+function spawnShootingStar() {
+  const angle = Math.PI * (0.12 + Math.random() * 0.12);
+  shootingStars.push({
+    x: width * (0.3 + Math.random() * 0.6),
+    y: height * (0.05 + Math.random() * 0.25),
+    angle,
+    length: height * (0.25 + Math.random() * 0.2),
+    bornAt: performance.now(),
+    duration: 700 + Math.random() * 500,
+  });
+}
+
+function maybeSpawnShootingStar(now) {
+  if (reducedMotion.matches || dayAmount < 0.62) {
+    nextStarAt = now + 1500;
+    return;
+  }
+  if (now >= nextStarAt) {
+    spawnShootingStar();
+    nextStarAt = now + 2600 + Math.random() * 4200;
+  }
+}
+
+function drawShootingStars(now) {
+  const visibility = smoothstep(0.5, 0.95, dayAmount);
+  for (let index = shootingStars.length - 1; index >= 0; index -= 1) {
+    const star = shootingStars[index];
+    const state = shootingStarAt(star, now);
+    if (state.done) {
+      shootingStars.splice(index, 1);
+      continue;
+    }
+    const alpha = state.opacity * visibility;
+    if (alpha <= 0.004) continue;
+
+    const tailX = state.x - Math.cos(star.angle) * star.length * 0.18;
+    const tailY = state.y - Math.sin(star.angle) * star.length * 0.18;
+    const trail = context.createLinearGradient(tailX, tailY, state.x, state.y);
+    trail.addColorStop(0, "rgba(255,255,255,0)");
+    trail.addColorStop(1, `rgba(255,255,255,${alpha})`);
+    context.strokeStyle = trail;
+    context.lineWidth = 2;
+    context.lineCap = "round";
+    context.beginPath();
+    context.moveTo(tailX, tailY);
+    context.lineTo(state.x, state.y);
+    context.stroke();
+
+    context.fillStyle = `rgba(255,255,255,${alpha})`;
+    context.beginPath();
+    context.arc(state.x, state.y, 1.7, 0, Math.PI * 2);
+    context.fill();
+  }
+}
+
+// Fireflies drifting over the grass, glowing softly once night falls.
+function drawFireflies(now) {
+  const visibility = smoothstep(0.35, 0.95, dayAmount);
+  if (visibility <= 0.004) return;
+
+  const time = reducedMotion.matches ? 0 : now;
+  for (const fly of fireflies) {
+    const { x, y, glow } = fireflyAt(fly, time);
+    const alpha = visibility * (0.25 + glow * 0.75);
+    const radius = fly.size * (0.7 + glow * 0.6);
+
+    const halo = context.createRadialGradient(x, y, 0, x, y, radius * 4);
+    halo.addColorStop(0, `rgba(216,255,150,${alpha})`);
+    halo.addColorStop(1, "rgba(216,255,150,0)");
+    context.fillStyle = halo;
+    context.beginPath();
+    context.arc(x, y, radius * 4, 0, Math.PI * 2);
+    context.fill();
+
+    context.fillStyle = `rgba(242,255,198,${alpha})`;
+    context.beginPath();
+    context.arc(x, y, radius * 0.7, 0, Math.PI * 2);
+    context.fill();
+  }
 }
 
 function drawSunAndMoon() {
@@ -276,11 +375,11 @@ function drawHills() {
 // A lone, stylised tree rooted on the hill crest, swaying gently with the breeze.
 function drawTree(now) {
   const { x, y } = treeCrest;
-  const sway = reducedMotion.matches ? 0 : Math.sin(now * 0.0006) * 2.2;
-  const trunkHeight = height * 0.075;
-  const trunkWidth = Math.max(4, height * 0.0085);
-  const canopyR = height * 0.055;
-  const canopyY = y - trunkHeight * 0.74;
+  const sway = reducedMotion.matches ? 0 : Math.sin(now * 0.0006) * 2.6;
+  const trunkHeight = height * 0.11;
+  const trunkWidth = Math.max(5, height * 0.011);
+  const canopyR = height * 0.062;
+  const canopyY = y - trunkHeight;
   const cx = x + sway;
 
   context.save();
@@ -370,11 +469,14 @@ function render(now = 0) {
   drawSky();
   drawTwilightGlow();
   drawStars();
+  maybeSpawnShootingStar(now);
+  drawShootingStars(now);
   drawSunAndMoon();
   for (const cloud of clouds) drawCloud(cloud);
   drawHills();
   drawTree(now);
   drawGrass(now);
+  drawFireflies(now);
 
   const currentThemeColor = mixHex(dayPalette.skyTop, nightPalette.skyTop, dayAmount);
   themeColor.setAttribute("content", currentThemeColor);
