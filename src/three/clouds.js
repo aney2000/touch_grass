@@ -8,18 +8,29 @@ import { randomGenerator } from "../scene-math.js";
 import { SCENE_SEED } from "../config.js";
 
 export const CLOUD_BAND = Object.freeze({ span: 460, yMin: 30, yMax: 56, zMin: -230, zMax: -85 });
-const PUFF_SCALE = 2.7;
-const SHADE = 0.8;
+const PUFF_SCALE = 2.6;
+const SHADE = 0.82;
 
-function createPuffTexture(size = 64) {
+// Cheap deterministic value noise so puff edges look billowy rather than perfectly round.
+function edgeNoise(x, y) {
+  const value = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+  return value - Math.floor(value);
+}
+
+function createPuffTexture(size = 128) {
   const data = new Uint8Array(size * size * 4);
   for (let y = 0; y < size; y += 1) {
     for (let x = 0; x < size; x += 1) {
       const dx = (x + 0.5) / size - 0.5;
       const dy = (y + 0.5) / size - 0.5;
-      const falloff = Math.max(0, 1 - Math.hypot(dx, dy) * 2);
-      const alpha = falloff ** 1.6;
-      data.set([255, 255, 255, Math.round(alpha * 255)], (y * size + x) * 4);
+      const angle = Math.atan2(dy, dx);
+      const lumps = 0.08 * Math.sin(angle * 5) + 0.05 * Math.sin(angle * 9 + 1.7);
+      const distance = Math.hypot(dx, dy) * 2 * (1 - lumps);
+      const falloff = Math.max(0, 1 - distance);
+      const grain = 0.9 + 0.1 * edgeNoise(x, y);
+      const alpha = Math.min(1, falloff ** 1.25 * 1.35) * grain;
+      const light = Math.round(255 * (0.9 + 0.1 * (0.5 - dy)));
+      data.set([light, light, light, Math.round(alpha * 255)], (y * size + x) * 4);
     }
   }
   const texture = new THREE.DataTexture(data, size, size);
@@ -51,7 +62,7 @@ export function createCloudLayer({ count = 14 } = {}) {
     const group = new THREE.Group();
     group.position.set(cloud.x, cloud.y, cloud.z);
     for (const puff of cloud.puffs) {
-      const sprite = new THREE.Sprite(puff.y < puff.radius * 0.6 ? shade : material);
+      const sprite = new THREE.Sprite(puff.y < puff.radius * 0.75 ? shade : material);
       sprite.position.set(puff.x, puff.y, puff.z).multiplyScalar(cloud.scale);
       sprite.scale.setScalar(puff.radius * PUFF_SCALE * cloud.scale);
       group.add(sprite);

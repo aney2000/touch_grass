@@ -17,7 +17,30 @@ describe("createCloudBank", () => {
   });
 
   it("builds every cloud from several puffs for a cumulus silhouette", () => {
-    for (const cloud of bank) assert.ok(cloud.puffs.length >= 5);
+    for (const cloud of bank) assert.ok(cloud.puffs.length >= 9);
+  });
+
+  it("overlaps every puff with a neighbour so each cloud reads as one billowy mass", () => {
+    for (const cloud of bank) {
+      for (const puff of cloud.puffs) {
+        const touching = cloud.puffs.some(
+          (other) =>
+            other !== puff &&
+            Math.hypot(other.x - puff.x, other.y - puff.y, other.z - puff.z) <
+              (other.radius + puff.radius) * 0.6,
+        );
+        assert.ok(touching);
+      }
+    }
+  });
+
+  it("keeps a flat base and a billowing top", () => {
+    for (const cloud of bank) {
+      const lowest = Math.min(...cloud.puffs.map((puff) => puff.y - puff.radius * 0.5));
+      const highest = Math.max(...cloud.puffs.map((puff) => puff.y));
+      assert.ok(lowest > -1.5, "the underside should stay roughly level");
+      assert.ok(highest > 3, "the top should heap upward");
+    }
   });
 
   it("drifts noticeably faster than the old 2D clouds (several units a second)", () => {
