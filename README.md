@@ -2,98 +2,112 @@
 
 A quiet little field to visit whenever you need a moment outside.
 
-Stillfield is a single-page, dependency-free canvas animation: a rolling meadow
-under a changing sky. Brush the grass with your cursor to send ripples of wind
-through it, and let night fall to watch stars, fireflies, a drifting moon, and
-the occasional shooting star arrive.
+Stillfield is a single-page three.js scene: a sunlit, rolling hill under a
+cobalt sky — an homage to the classic "Bliss" desktop — that you can actually
+touch. Rest your cursor on the grass to part it, swipe to send ripples through
+the meadow, and let night fall to watch the moon rise, stars and meteors
+appear, and fireflies blink to life.
 
 ## Features
 
-- **Hand-drawn canvas scene** — layered hills, clouds, a lone swaying tree, and
-  a field of individually simulated grass blades.
-- **Day / night transition** — an eased tween with a warm sunrise/sunset glow,
-  moving sun and moon, and a live clock that tracks the time of day.
-- **Interactive wind** — move or press the pointer over the grass to create
-  gusts that bend nearby blades and fade out naturally.
-- **Night life** — twinkling stars, softly glowing fireflies, and meteors that
-  streak across the sky.
-- **Respects `prefers-reduced-motion`** — animation is dialled back for users
-  who ask for less motion.
-- **Pure, tested math core** — all the non-DOM maths lives in
-  [src/scene-math.js](src/scene-math.js) and is covered by unit tests.
+- **Real-time 3D meadow** — tens of thousands of GPU-instanced grass blades
+  swaying in rolling wind waves, a Bliss-style hill, a lone swaying tree, and
+  billowy cumulus clouds streaming across the sky.
+- **Day / night transition** — the same eased tween and live clock as before,
+  now driving a sunset sky dome, moving sun and moon lights, fog, bloom, and
+  exposure from a single `dayAmount`.
+- **Touch the grass** — the pointer is ray-cast onto the terrain: grass parts
+  under your hand, and brisk swipes or taps send expanding ripple rings.
+- **Real fireflies** — each one wanders in 3D and flashes like the real thing
+  (a short pulse, then darkness); bloom makes them glow and they light the
+  grass blades around them.
+- **Living camera** — a slow breathing drift plus gentle parallax toward the
+  pointer; the field of view widens on portrait screens.
+- **Respects `prefers-reduced-motion`** — wind, clouds, fireflies, and the
+  camera calm down, meteors stay away, and the transition is quicker.
+- **Graceful fallback** — without WebGL, a CSS rendition of the field remains.
 
 ## Getting started
 
-No build step and no dependencies — it is plain HTML, CSS, and ES modules.
-Because it uses `type="module"`, it must be served over HTTP rather than opened
-as a `file://` URL.
-
 ```bash
-# Serve the folder on http://localhost:3000
-npm run serve
+npm install
+npm run dev       # http://localhost:5173
+npm run build     # production bundle in dist/
+npm run preview   # serve the production bundle
 ```
 
-Then open the printed URL in your browser.
+> Working from WSL on a Windows drive (`/mnt/c/...`)? File watching does not
+> see edits there; start the dev server with `CHOKIDAR_USEPOLLING=1 npm run dev`.
 
-Any static file server works equally well, for example:
-
-```bash
-python3 -m http.server 5173
-```
-
-## Running the tests
-
-The scene logic is unit tested with Node's built-in test runner (no dependencies required):
+## Quality gates
 
 ```bash
-npm test
+npm test             # Node's built-in test runner
+npm run lint         # ESLint
+npm run format:check # Prettier
+npm run verify       # all of the above
 ```
 
-## Linting and formatting
-
-Code style is enforced with ESLint and Prettier:
-
-```bash
-npm run lint        # report problems
-npm run lint:fix    # auto-fix where possible
-npm run format      # format with Prettier
-```
+Scene logic is test-driven. The pure models need no browser, and the three.js
+systems are tested headlessly against three's core (no WebGL required) — only
+the WebGL stage and the composition root are left to manual checks.
 
 ## Project structure
 
 ```
-index.html          Markup and the canvas element
-styles.css          Layout, controls, theming, and motion
-app.js              Composition root: wires the DOM to the model/renderer/input
+index.html            Markup and the canvas element
+styles.css            Layout, controls, theming, and the static fallback
+app.js                Composition root: wires DOM, model, world, and input
+vite.config.js        Build config (three.js in its own vendor chunk)
 src/
-  config.js         Palettes and tuning constants (single source of truth)
-  scene-math.js     Pure, DOM-free maths (colour mixing, curves, motion)
-  time.js           Clock formatting and the day/night tween
-  scene-objects.js  Deterministic factories for grass, stars, fireflies, gusts
-  scene.js          Scene model: mutable state and per-frame lifecycle
-  renderer.js       Ordered layer pipeline that paints the scene
-  input.js          Pointer controller that turns gestures into wind
+  config.js           Palettes and tuning constants (single source of truth)
+  scene-math.js       Pure maths: colour mixing, easing, shooting stars
+  time.js             Clock formatting and the day/night tween
+  atmosphere.js       dayAmount -> every sky colour, light, and visibility
+  terrain.js          Height field, crest finding, and ground picking
+  wind.js             Ripple gusts and the hand that parts the grass
+  fireflies.js        3D firefly flight and flash pattern
+  clouds.js           Cumulus cloud generation and drift
+  camera-rig.js       Camera drift, parallax, and portrait FOV
+  scene.js            Scene model: state, lifecycle, per-frame snapshot
+  input.js            Pointer controller: parallax, touch, and gusts
+  three/
+    world.js          Ordered pipeline of scene systems
+    stage.js          WebGL renderer, bloom, and tone mapping
+    camera.js         Camera pose, resize, and ground picker
+    sky.js            Sky dome (sun, moon, twilight) and stars
+    lights.js         Sun, moon, and hemisphere lights
+    clouds.js         Billboard-puff cumulus clouds
+    meteors.js        Night meteor shower
+    terrain.js        Bliss hill mesh
+    tree.js           The lone tree
+    grass.js          Instanced grass shader (wind, gusts, firefly light)
+    fireflies.js      Bloom-ready firefly glow
 tests/
-  *.test.js         Unit tests for the pure modules
+  *.test.js           Pure model tests
+  three/*.test.js     Headless tests for the three.js systems
 ```
 
 ## How it works
 
 The code is split along clear responsibilities:
 
-- **`Scene`** ([src/scene.js](src/scene.js)) holds all mutable state and the
-  per-frame lifecycle (resize, advance, day/night toggle, wind). It knows
-  nothing about the canvas or DOM.
-- **The renderer** ([src/renderer.js](src/renderer.js)) is an ordered list of
-  layer functions — sky, twilight, stars, sun/moon, clouds, hills, tree, grass,
-  fireflies, vignette. Each is a pure-ish `(context, scene, now)` draw call, so
-  adding scenery means registering a layer, not editing the loop.
-- **The input controller** ([src/input.js](src/input.js)) turns pointer
-  gestures over the grass into short-lived "gusts" on the model, which
-  [src/scene-math.js](src/scene-math.js) converts into per-blade bending.
-- **`app.js`** is a thin composition root: it owns the DOM, sizes the canvas,
-  and runs the `requestAnimationFrame` loop.
+- **Pure models** ([src/atmosphere.js](src/atmosphere.js),
+  [src/terrain.js](src/terrain.js), [src/wind.js](src/wind.js), ...) hold all
+  the maths and know nothing about the DOM or WebGL.
+- **`Scene`** ([src/scene.js](src/scene.js)) owns mutable state and the
+  per-frame lifecycle, and publishes one read-only `frame()` snapshot: time,
+  atmosphere, wind, fireflies, and pointer.
+- **The world** ([src/three/world.js](src/three/world.js)) is an ordered list
+  of systems. Each owns one three.js object and an `update(frame)`, so adding
+  scenery means registering a system, not editing the loop.
+- **The stage** ([src/three/stage.js](src/three/stage.js)) is the only WebGL
+  boundary: it renders through bloom and tone mapping.
+- **`app.js`** is a thin composition root that owns the DOM and runs the
+  `requestAnimationFrame` loop.
 
-The day/night toggle sets a target and the model eases `dayAmount` from its
-current value toward it, so every colour, glow, and position is just a blend
-driven by that single number.
+The day/night toggle sets a target and the model eases `dayAmount` toward it;
+[`atmosphereAt(dayAmount)`](src/atmosphere.js) turns that single number into
+every colour, light, and glow on screen.
+
+The Bliss look is recreated procedurally — no copyrighted imagery is bundled.
