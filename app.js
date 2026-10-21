@@ -1,15 +1,33 @@
-// Composition root: wires the DOM to the scene model, the renderer, and input,
+// Composition root: wires the DOM to the scene model, the 3D world, and input,
 // then runs the animation loop. All the heavy lifting lives in ./src.
 
 import { Scene } from "./src/scene.js";
-import { createRenderer } from "./src/renderer.js";
 import { createPointerInput } from "./src/input.js";
+import { cameraPoseAt } from "./src/camera-rig.js";
 import { mixHex } from "./src/scene-math.js";
-import { dayPalette, nightPalette } from "./src/config.js";
+import { COUNTS, dayPalette, nightPalette } from "./src/config.js";
+import { createWorld } from "./src/three/world.js";
+import { createStage } from "./src/three/stage.js";
+import {
+  createCamera,
+  applyCameraPose,
+  resizeCamera,
+  createGroundPicker,
+} from "./src/three/camera.js";
+import { createSky } from "./src/three/sky.js";
+import { createLights } from "./src/three/lights.js";
+import { createCloudLayer } from "./src/three/clouds.js";
+import { createMeteorShower } from "./src/three/meteors.js";
+import { createTerrain } from "./src/three/terrain.js";
+import { createTree } from "./src/three/tree.js";
+import { createGrass } from "./src/three/grass.js";
+import { createFireflyLights } from "./src/three/fireflies.js";
+
+const COMPACT_SCREEN_PX = 700;
+const MAX_PIXEL_RATIO = 1.75;
 
 const sceneElement = document.querySelector(".scene");
 const canvas = document.querySelector("#meadow");
-const context = canvas.getContext("2d", { alpha: false });
 const toggle = document.querySelector("#scene-toggle");
 const toggleLabel = document.querySelector(".scene-toggle__label");
 const clock = document.querySelector("#scene-clock");
@@ -17,23 +35,41 @@ const themeColor = document.querySelector('meta[name="theme-color"]');
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 const model = new Scene({ prefersReducedMotion: reducedMotion.matches });
-const renderer = createRenderer(context);
-createPointerInput({ canvas, sceneElement, model });
+const camera = createCamera();
+const compact = window.innerWidth < COMPACT_SCREEN_PX;
+
+// The world, painted back to front. Order is the only thing that matters here.
+const world = createWorld([
+  createSky(),
+  createLights(),
+  createCloudLayer({ count: COUNTS.clouds }),
+  createMeteorShower(),
+  createTerrain(),
+  createTree(),
+  createGrass({ count: compact ? COUNTS.grassBladesCompact : COUNTS.grassBlades }),
+  createFireflyLights({ capacity: COUNTS.fireflies }),
+]);
+
+let stage;
+try {
+  stage = createStage(canvas, { scene: world.scene, camera });
+} catch {
+  // Without WebGL the CSS backdrop still shows a calm, static field.
+  sceneElement.classList.add("scene--static");
+}
+
+createPointerInput({ canvas, sceneElement, model, pick: createGroundPicker(camera) });
 
 let pixelRatio = 1;
 let lastClockKey = "";
 
-function resizeCanvas() {
+function resize() {
   const bounds = sceneElement.getBoundingClientRect();
   const width = bounds.width;
   const height = Math.max(bounds.height, window.innerHeight);
-  pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
-  canvas.width = Math.round(width * pixelRatio);
-  canvas.height = Math.round(height * pixelRatio);
-  canvas.style.width = `${width}px`;
-  canvas.style.height = `${height}px`;
-  context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-  model.resize(width, height);
+  pixelRatio = Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO);
+  resizeCamera(camera, width, height);
+  stage?.resize(width, height, pixelRatio);
 }
 
 function updateClock() {
@@ -53,7 +89,15 @@ function updateThemeColor() {
 
 function frame(now = 0) {
   model.advance(now);
-  renderer.render(model, now);
+  const snapshot = { ...model.frame(), pixelRatio };
+  applyCameraPose(
+    camera,
+    cameraPoseAt(snapshot.seconds, snapshot.pointer, {
+      reducedMotion: model.prefersReducedMotion,
+    }),
+  );
+  world.update(snapshot);
+  stage?.render(snapshot.atmosphere);
   updateThemeColor();
   updateClock();
   window.requestAnimationFrame(frame);
@@ -79,6 +123,6 @@ reducedMotion.addEventListener("change", (event) => {
   model.prefersReducedMotion = event.matches;
 });
 
-window.addEventListener("resize", resizeCanvas);
-resizeCanvas();
+window.addEventListener("resize", resize);
+resize();
 window.requestAnimationFrame(frame);

@@ -1,44 +1,52 @@
-// Pointer input: turns cursor gestures over the lower "grass" region of the
-// canvas into wind gusts on the model, and toggles the hover affordance.
+// Pointer input: the cursor's view position drives camera parallax, and where
+// it meets the meadow becomes a resting "hand" plus ripples on brisk swipes.
 
-const GRASS_TOP = 0.62; // fraction of height below which the grass responds
 const MIN_SWIPE_PX = 8;
 
-export function createPointerInput({ canvas, sceneElement, model }) {
-  let previousPointer = null;
+export function toNdc({ clientX, clientY }, bounds) {
+  return {
+    x: ((clientX - bounds.left) / bounds.width) * 2 - 1,
+    y: 1 - ((clientY - bounds.top) / bounds.height) * 2,
+  };
+}
 
-  function localPoint(event) {
-    const bounds = canvas.getBoundingClientRect();
-    return { x: event.clientX - bounds.left, y: event.clientY - bounds.top };
+// `pick(ndc)` returns the world point on the ground under the pointer, or null.
+export function createPointerInput({ canvas, sceneElement, model, pick }) {
+  let previousX = null;
+
+  function locate(event) {
+    const ndc = toNdc(event, canvas.getBoundingClientRect());
+    return { ndc, hit: pick(ndc) };
   }
 
-  function overGrass(point) {
-    return point.y > model.height * GRASS_TOP;
+  function setTouching(hit) {
+    model.setTouch(hit);
+    sceneElement.classList.toggle("scene--touching", Boolean(hit));
   }
 
   function onPointerMove(event) {
-    const point = localPoint(event);
-    const touching = overGrass(point);
-    sceneElement.classList.toggle("scene--touching", touching);
+    const { ndc, hit } = locate(event);
+    model.setPointer(ndc);
+    setTouching(hit);
 
-    if (touching && previousPointer && event.pointerType !== "touch") {
-      const deltaX = point.x - previousPointer.x;
+    if (hit && previousX !== null && event.pointerType !== "touch") {
+      const deltaX = event.clientX - previousX;
       if (Math.abs(deltaX) > MIN_SWIPE_PX) {
-        const strength = Math.min(1, 0.35 + Math.abs(deltaX) / 150);
-        model.pushGust(point, Math.sign(deltaX), strength, performance.now());
+        model.pushGust(hit, Math.min(1, 0.35 + Math.abs(deltaX) / 150), performance.now());
       }
     }
-    previousPointer = point;
+    previousX = event.clientX;
   }
 
   function onPointerDown(event) {
-    const point = localPoint(event);
-    if (overGrass(point)) model.pushGust(point, 1, 0.9, performance.now());
+    const { hit } = locate(event);
+    if (hit) model.pushGust(hit, 0.9, performance.now());
   }
 
   function onPointerLeave() {
-    sceneElement.classList.remove("scene--touching");
-    previousPointer = null;
+    setTouching(null);
+    model.setPointer({ x: 0, y: 0 });
+    previousX = null;
   }
 
   canvas.addEventListener("pointermove", onPointerMove);

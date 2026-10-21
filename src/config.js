@@ -43,8 +43,14 @@ export const COUNTS = {
   maxGrass: 1500,
   grassPerPixel: 0.78,
   stars: 150,
-  fireflies: 26,
+  fireflies: 48,
+  grassBlades: 60000,
+  grassBladesCompact: 24000,
+  clouds: 14,
 };
+
+// Where the fireflies hover: the meadow just in front of the viewer.
+export const FIREFLY_AREA = { xMin: -14, xMax: 14, zMin: -26, zMax: 6 };
 
 export const dayClouds = [
   { x: 0.08, y: 0.2, scale: 0.8, speed: 0.004 },
