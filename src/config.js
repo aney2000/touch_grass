@@ -1,24 +1,35 @@
 // Single source of truth for the scene's colours and tuning constants.
 // Keeping these out of the rendering code makes the look easy to adjust and test.
 
+// Day colours recreate the look of the classic "Bliss" desktop: a saturated
+// cobalt sky over a vivid, rolling green hill.
 export const dayPalette = {
-  skyTop: "#79c4ec",
-  skyMid: "#a9dcf4",
-  horizon: "#f4edcf",
-  farHill: "#76b95d",
-  nearHill: "#4e9c4d",
-  frontHill: "#347744",
-  grass: ["#a2cb55", "#76b944", "#55983e", "#377b3d", "#c1d369"],
+  skyTop: "#1d5fd1",
+  skyMid: "#4f95ea",
+  horizon: "#b8d9f6",
+  farHill: "#5aa83a",
+  nearHill: "#4c9a2c",
+  frontHill: "#3f8a24",
+  grass: ["#7cc23a", "#62ad2c", "#4e9a24", "#3c8420", "#9bd04a"],
+  cloud: "#ffffff",
 };
 
 export const nightPalette = {
-  skyTop: "#10263e",
-  skyMid: "#283d50",
-  horizon: "#687565",
-  farHill: "#435a48",
-  nearHill: "#304a3d",
-  frontHill: "#243c34",
-  grass: ["#637c54", "#536f4b", "#496746", "#3e5c40", "#74845a"],
+  skyTop: "#06122a",
+  skyMid: "#16284a",
+  horizon: "#34486a",
+  farHill: "#24402f",
+  nearHill: "#1d3627",
+  frontHill: "#162d20",
+  grass: ["#3f6a3a", "#355f34", "#2d552f", "#264a29", "#4a7642"],
+  cloud: "#3a4a66",
+};
+
+// Warm sunset/sunrise tones blended in while the sky changes over.
+export const twilightPalette = {
+  horizon: "#ff9a5c",
+  sky: "#c86a8a",
+  sun: "#ffb070",
 };
 
 // Day/night is an explicit eased tween so the sunrise/sunset is always visible.

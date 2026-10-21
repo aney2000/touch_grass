@@ -16,6 +16,16 @@ export function hexToRgb(hex) {
   return [1, 3, 5].map((index) => Number.parseInt(hex.slice(index, index + 2), 16));
 }
 
+// Colour as [r, g, b] in 0..1, the form WebGL materials and uniforms expect.
+export function hexToUnitRgb(hex) {
+  return hexToRgb(hex).map((channel) => channel / 255);
+}
+
+// Endpoint-exact lerp form, so amount 0 or 1 yields the input colour bit-for-bit.
+export function mixRgb(first, second, amount) {
+  return first.map((value, index) => value * (1 - amount) + second[index] * amount);
+}
+
 export function mixHex(first, second, amount) {
   const a = hexToRgb(first);
   const b = hexToRgb(second);

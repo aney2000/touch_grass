@@ -6,6 +6,7 @@ import {
   hexToRgb,
   mixHex,
   blendColor,
+  mixRgb,
   smoothstep,
   grassBend,
 } from "../src/scene-math.js";
@@ -70,6 +71,19 @@ describe("mixHex", () => {
 describe("blendColor", () => {
   it("is an alias for mixHex", () => {
     assert.equal(blendColor("#102030", "#405060", 0.25), mixHex("#102030", "#405060", 0.25));
+  });
+});
+
+describe("mixRgb", () => {
+  it("interpolates each channel independently", () => {
+    assert.deepEqual(mixRgb([0, 0.5, 1], [1, 0.5, 0], 0.25), [0.25, 0.5, 0.75]);
+  });
+
+  it("returns a new array rather than mutating its inputs", () => {
+    const first = [0, 0, 0];
+    const mixed = mixRgb(first, [1, 1, 1], 1);
+    assert.deepEqual(first, [0, 0, 0]);
+    assert.deepEqual(mixed, [1, 1, 1]);
   });
 });
 
