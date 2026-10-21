@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { terrainHeight, findCrest, scatterOnTerrain } from "../src/terrain.js";
+import { terrainHeight, findCrest, scatterOnTerrain, pickTerrain } from "../src/terrain.js";
 import { randomGenerator } from "../src/scene-math.js";
 
 describe("terrainHeight", () => {
@@ -71,5 +71,28 @@ describe("scatterOnTerrain", () => {
       scatterOnTerrain(randomGenerator(9), 20, area),
       scatterOnTerrain(randomGenerator(9), 20, area),
     );
+  });
+});
+
+describe("pickTerrain", () => {
+  const normalize = ([x, y, z]) => {
+    const length = Math.hypot(x, y, z);
+    return [x / length, y / length, z / length];
+  };
+
+  it("finds where a downward ray meets the ground", () => {
+    const hit = pickTerrain({ origin: [0, 3, 12], direction: normalize([0, -0.3, -1]) });
+    assert.ok(hit);
+    assert.ok(Math.abs(hit.y - terrainHeight(hit.x, hit.z)) < 0.01);
+    assert.ok(hit.z < 12);
+  });
+
+  it("misses when looking up into the sky", () => {
+    assert.equal(pickTerrain({ origin: [0, 3, 12], direction: normalize([0, 1, -1]) }), null);
+  });
+
+  it("works against any height function", () => {
+    const hit = pickTerrain({ origin: [0, 10, 0], direction: [0, -1, 0] }, { heightAt: () => 4 });
+    assert.ok(Math.abs(hit.y - 4) < 0.01);
   });
 });

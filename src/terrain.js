@@ -44,3 +44,29 @@ export function scatterOnTerrain(random, count, { xMin, xMax, zMin, zMax }) {
     return { x, y: terrainHeight(x, z), z };
   });
 }
+
+// Where a ray first meets the ground: march until below the surface, then bisect.
+export function pickTerrain(
+  { origin, direction },
+  { heightAt = terrainHeight, maxDistance = 250, step = 0.5 } = {},
+) {
+  const at = (t) => [0, 1, 2].map((axis) => origin[axis] + direction[axis] * t);
+  const below = (t) => {
+    const [x, y, z] = at(t);
+    return y <= heightAt(x, z);
+  };
+
+  for (let far = step; far <= maxDistance; far += step) {
+    if (!below(far)) continue;
+    let near = far - step;
+    let hit = far;
+    for (let i = 0; i < 20; i += 1) {
+      const mid = (near + hit) / 2;
+      if (below(mid)) hit = mid;
+      else near = mid;
+    }
+    const [x, y, z] = at(hit);
+    return { x, y, z };
+  }
+  return null;
+}
