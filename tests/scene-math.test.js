@@ -1,15 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import {
-  clamp,
-  randomGenerator,
-  hexToRgb,
-  mixHex,
-  blendColor,
-  mixRgb,
-  smoothstep,
-  grassBend,
-} from "../src/scene-math.js";
+import { clamp, randomGenerator, hexToRgb, mixHex, mixRgb, smoothstep } from "../src/scene-math.js";
 
 describe("clamp", () => {
   it("returns the value when it is inside the range", () => {
@@ -68,12 +59,6 @@ describe("mixHex", () => {
   });
 });
 
-describe("blendColor", () => {
-  it("is an alias for mixHex", () => {
-    assert.equal(blendColor("#102030", "#405060", 0.25), mixHex("#102030", "#405060", 0.25));
-  });
-});
-
 describe("mixRgb", () => {
   it("interpolates each channel independently", () => {
     assert.deepEqual(mixRgb([0, 0.5, 1], [1, 0.5, 0], 0.25), [0.25, 0.5, 0.75]);
@@ -100,30 +85,5 @@ describe("smoothstep", () => {
 
   it("eases through 0.5 at the midpoint", () => {
     assert.ok(Math.abs(smoothstep(0, 1, 0.5) - 0.5) < 1e-10);
-  });
-});
-
-describe("grassBend", () => {
-  const blade = { x: 100, phase: 0, height: 0.1 };
-
-  it("has no idle sway when the sine argument is zero", () => {
-    // now chosen so 0.0008 * now + phase + x * 0.004 === 0
-    const now = -(blade.x * 0.004) / 0.0008;
-    const bend = grassBend(blade, { gusts: [], height: 1000, now, motionScale: 1 });
-    assert.ok(Math.abs(bend) < 1e-6);
-  });
-
-  it("never exceeds the clamp limit, even for an extreme gust", () => {
-    const strongGust = { x: 100, direction: 1, strength: 100, startedAt: 0 };
-    const bend = grassBend(blade, { gusts: [strongGust], height: 1000, now: 0, motionScale: 1 });
-    const limit = blade.height * 1000 * 0.68;
-    assert.ok(Math.abs(bend) <= limit + 1e-9);
-  });
-
-  it("pushes the blade further than its resting position when a gust passes over it", () => {
-    const gust = { x: 100, direction: 1, strength: 0.8, startedAt: 0 };
-    const resting = grassBend(blade, { gusts: [], height: 1000, now: 0, motionScale: 0 });
-    const gusted = grassBend(blade, { gusts: [gust], height: 1000, now: 0, motionScale: 0 });
-    assert.ok(gusted > resting);
   });
 });

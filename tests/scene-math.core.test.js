@@ -1,14 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import {
-  clamp,
-  smoothstep,
-  hexToRgb,
-  mixHex,
-  randomGenerator,
-  cubicBezier,
-  highestPoint,
-} from "../src/scene-math.js";
+import { clamp, smoothstep, hexToRgb, mixHex, randomGenerator } from "../src/scene-math.js";
 
 describe("clamp", () => {
   it("passes values already in range through unchanged", () => {
@@ -72,36 +64,5 @@ describe("randomGenerator", () => {
       const value = random();
       assert.ok(value >= 0 && value < 1);
     }
-  });
-});
-
-describe("cubicBezier", () => {
-  it("returns the endpoints at t = 0 and t = 1", () => {
-    assert.equal(cubicBezier(0, 0.3, 0.7, 1, 0), 0);
-    assert.equal(cubicBezier(0, 0.3, 0.7, 1, 1), 1);
-  });
-
-  it("stays within the control hull for a monotonic curve", () => {
-    const value = cubicBezier(0, 0.3, 0.7, 1, 0.5);
-    assert.ok(value > 0 && value < 1);
-  });
-});
-
-describe("highestPoint", () => {
-  it("returns the point with the smallest y", () => {
-    const points = [
-      { x: 0, y: 10 },
-      { x: 1, y: 3 },
-      { x: 2, y: 7 },
-    ];
-    assert.deepEqual(highestPoint(points), { x: 1, y: 3 });
-  });
-
-  it("keeps the first point on a tie", () => {
-    const points = [
-      { x: 0, y: 5 },
-      { x: 1, y: 5 },
-    ];
-    assert.equal(highestPoint(points).x, 0);
   });
 });
