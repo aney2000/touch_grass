@@ -76,6 +76,20 @@ describe("atmosphereAt", () => {
     assert.deepEqual(state.fog, state.skyHorizon);
   });
 
+  it("blooms only the sun by day but lets night glows bloom generously", () => {
+    const day = atmosphereAt(0);
+    const night = atmosphereAt(1);
+    assert.ok(day.bloomThreshold > night.bloomThreshold);
+    assert.ok(night.bloomStrength > day.bloomStrength);
+    assert.ok(day.bloomThreshold >= 0.9, "a bright Bliss sky must not haze over");
+  });
+
+  it("keeps the exposure positive throughout the transition", () => {
+    for (let amount = 0; amount <= 1; amount += 0.1) {
+      assert.ok(atmosphereAt(amount).exposure > 0);
+    }
+  });
+
   it("clamps out-of-range input", () => {
     assert.deepEqual(atmosphereAt(-2), atmosphereAt(0));
     assert.deepEqual(atmosphereAt(3), atmosphereAt(1));

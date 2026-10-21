@@ -80,5 +80,8 @@ export function atmosphereAt(dayAmount) {
     ambientIntensity: 0.95 - amount * 0.72,
     starVisibility: smoothstep(0.16, 0.9, amount),
     fireflyVisibility: smoothstep(0.35, 0.95, amount),
+    bloomThreshold: 0.95 - smoothstep(0.2, 0.9, amount) * 0.7,
+    bloomStrength: 0.3 + smoothstep(0.2, 0.9, amount) * 0.9,
+    exposure: 1 + amount * 0.25,
   };
 }
