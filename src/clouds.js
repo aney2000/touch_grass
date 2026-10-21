@@ -8,7 +8,7 @@ export function createCloudBank(random, count, { span, yMin, yMax, zMin, zMax })
       x: -span / 2 + random() * span,
       y: yMin + random() * (yMax - yMin),
       z: zMin + random() * (zMax - zMin),
-      speed: 1.6 + random() * 1.6,
+      speed: 2.5 + random() * 2.5,
       scale,
       puffs: Array.from({ length: puffCount }, (_, index) => {
         const along = index / (puffCount - 1) - 0.5;

@@ -21,7 +21,7 @@ describe("createCloudBank", () => {
   });
 
   it("drifts noticeably faster than the old 2D clouds (several units a second)", () => {
-    for (const cloud of bank) assert.ok(cloud.speed >= 1.5);
+    for (const cloud of bank) assert.ok(cloud.speed >= 2.5);
   });
 });
 
