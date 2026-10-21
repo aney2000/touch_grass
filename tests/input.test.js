@@ -13,8 +13,8 @@ function fakeEnvironment({ pick = () => ({ x: 1, y: 0, z: -2 }) } = {}) {
   };
   const calls = { gusts: [], touches: [], pointers: [] };
   const model = {
-    now: 0,
-    pushGust: (point, strength) => calls.gusts.push({ point, strength }),
+    now: 4321,
+    pushGust: (point, strength, now) => calls.gusts.push({ point, strength, now }),
     setTouch: (point) => calls.touches.push(point),
     setPointer: (ndc) => calls.pointers.push(ndc),
   };
@@ -74,6 +74,12 @@ describe("createPointerInput", () => {
     const { canvas, calls } = fakeEnvironment();
     canvas.dispatchEvent(pointer("pointerdown", 100, 80, "touch"));
     assert.equal(calls.gusts.length, 1);
+  });
+
+  it("stamps gusts with the model's frame clock so every age shares one timeline", () => {
+    const { canvas, calls } = fakeEnvironment();
+    canvas.dispatchEvent(pointer("pointerdown", 100, 80));
+    assert.equal(calls.gusts[0].now, 4321);
   });
 
   it("lifts the hand and recentres the view when the pointer leaves", () => {

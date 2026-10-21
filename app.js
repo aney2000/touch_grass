@@ -104,7 +104,7 @@ function frame(now = 0) {
 }
 
 function toggleNight() {
-  const night = model.toggleNight(performance.now());
+  const night = model.toggleNight(model.now);
   toggle.setAttribute("aria-pressed", String(night === 1));
   toggleLabel.textContent = night ? "Let morning in" : "Let night fall";
   sceneElement.classList.toggle("scene--night", night === 1);

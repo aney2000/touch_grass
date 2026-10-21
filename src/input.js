@@ -32,7 +32,7 @@ export function createPointerInput({ canvas, sceneElement, model, pick }) {
     if (hit && previousX !== null && event.pointerType !== "touch") {
       const deltaX = event.clientX - previousX;
       if (Math.abs(deltaX) > MIN_SWIPE_PX) {
-        model.pushGust(hit, Math.min(1, 0.35 + Math.abs(deltaX) / 150), performance.now());
+        model.pushGust(hit, Math.min(1, 0.35 + Math.abs(deltaX) / 150), model.now);
       }
     }
     previousX = event.clientX;
@@ -40,7 +40,7 @@ export function createPointerInput({ canvas, sceneElement, model, pick }) {
 
   function onPointerDown(event) {
     const { hit } = locate(event);
-    if (hit) model.pushGust(hit, 0.9, performance.now());
+    if (hit) model.pushGust(hit, 0.9, model.now);
   }
 
   function onPointerLeave() {
