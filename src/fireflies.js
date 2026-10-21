@@ -35,3 +35,19 @@ export function fireflyFlash(fly, seconds) {
   if (cycle >= fly.flashDuty) return 0;
   return Math.sin((Math.PI * cycle) / fly.flashDuty) ** 2;
 }
+
+// Where every firefly is and how brightly it glows right now, reusing `out` between frames.
+export function snapshotSwarm(swarm, seconds, out = []) {
+  out.length = swarm.length;
+  swarm.forEach((fly, index) => {
+    const { x, y, z } = fireflyFlight(fly, seconds);
+    const state = out[index] ?? {};
+    state.x = x;
+    state.y = y;
+    state.z = z;
+    state.glow = fireflyFlash(fly, seconds);
+    state.size = fly.size;
+    out[index] = state;
+  });
+  return out;
+}

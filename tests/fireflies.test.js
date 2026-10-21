@@ -1,6 +1,11 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { createFireflySwarm, fireflyFlight, fireflyFlash } from "../src/fireflies.js";
+import {
+  createFireflySwarm,
+  fireflyFlight,
+  fireflyFlash,
+  snapshotSwarm,
+} from "../src/fireflies.js";
 import { randomGenerator } from "../src/scene-math.js";
 
 const area = { xMin: -10, xMax: 10, zMin: -12, zMax: 4 };
@@ -70,5 +75,23 @@ describe("fireflyFlash", () => {
 
   it("peaks near full brightness mid-flash", () => {
     assert.ok(fireflyFlash(fly, 0.3) > 0.95);
+  });
+});
+
+describe("snapshotSwarm", () => {
+  const swarm = createFireflySwarm(randomGenerator(8), 3, area);
+
+  it("captures each firefly's position, glow, and size at a moment", () => {
+    const [first] = snapshotSwarm(swarm, 4.2);
+    const { x, y, z } = fireflyFlight(swarm[0], 4.2);
+    assert.deepEqual(first, { x, y, z, glow: fireflyFlash(swarm[0], 4.2), size: swarm[0].size });
+  });
+
+  it("reuses the output array and its entries to avoid per-frame garbage", () => {
+    const out = snapshotSwarm(swarm, 1);
+    const entry = out[0];
+    assert.equal(snapshotSwarm(swarm, 2, out), out);
+    assert.equal(out[0], entry);
+    assert.equal(out.length, 3);
   });
 });
