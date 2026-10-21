@@ -9,6 +9,8 @@
   --muted-ink: #3b5e4e;
   --paper: #fffdf5;
   --control-shadow: 0 5px 22px rgb(20 56 40 / 12%);
+  --sky-ink: #fffdf5;
+  --sky-ink-shadow: 0 1px 14px rgb(8 36 92 / 38%);
 }
 
 * {
@@ -23,7 +25,7 @@ body {
 }
 
 body {
-  background: #8fcdf2;
+  background: #1d5fd1;
 }
 
 button,
@@ -38,6 +40,14 @@ a {
   overflow: hidden;
   isolation: isolate;
   color: var(--ink);
+  /* Painted until WebGL takes over, and kept as the fallback without it. */
+  background:
+    radial-gradient(140% 70% at 35% 112%, #5aa83a 0 58%, #3c8420 72%, transparent 72.4%),
+    linear-gradient(#1d5fd1, #4f95ea 52%, #b8d9f6 64%);
+}
+
+.scene--static .scene__canvas {
+  display: none;
 }
 
 .scene__canvas {
@@ -124,11 +134,19 @@ a {
 
 .scene-title h1 {
   margin: 15px 0 0;
-  color: var(--ink);
+  color: var(--sky-ink);
   font-family: Georgia, "Times New Roman", serif;
   font-size: 58px;
   font-weight: 400;
   line-height: 1.05;
+  text-shadow: var(--sky-ink-shadow);
+}
+
+.wordmark,
+.masthead__note,
+.scene-title__eyebrow {
+  color: var(--sky-ink);
+  text-shadow: var(--sky-ink-shadow);
 }
 
 .scene-controls {
