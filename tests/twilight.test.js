@@ -11,6 +11,11 @@ describe("twilightAmount", () => {
     assert.ok(Math.abs(twilightAmount(1)) < 1e-9);
   });
 
+  it("is exactly 0 at both ends so settled colours carry no warm residue", () => {
+    assert.equal(twilightAmount(0), 0);
+    assert.equal(twilightAmount(1), 0);
+  });
+
   it("peaks at the midpoint of the transition", () => {
     assert.ok(Math.abs(twilightAmount(0.5) - 1) < 1e-9);
   });
