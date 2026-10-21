@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  build:
+    name: Build and serve (HTTP 200)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+      - name: Start preview server
+        run: npx vite preview --port 4173 --strictPort > preview.log 2>&1 &
+
+      - name: Check the page and its assets return 200
+        run: |
+          base=http://localhost:4173
+          curl --silent --retry 30 --retry-delay 1 --retry-connrefused --output /dev/null "$base/"
+
+          status() { curl --silent --output /dev/null --write-out '%{http_code}' "$base$1"; }
+
+          code=$(status /)
+          echo "/ -> $code"
+          test "$code" = 200
+
+          for asset in $(grep -oE '/assets/[^"]+' dist/index.html | sort -u); do
+            code=$(status "$asset")
+            echo "$asset -> $code"
+            test "$code" = 200
+          done
+
+      - name: Preview server log
+        if: always()
+        run: cat preview.log || true
