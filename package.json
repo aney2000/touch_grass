@@ -5,18 +5,25 @@
   "description": "A quiet interactive meadow you can touch.",
   "type": "module",
   "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
     "test": "node --test",
-    "serve": "npx --yes serve .",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "verify": "npm run lint && npm run format:check && npm test"
   },
   "devDependencies": {
     "@eslint/js": "^9.12.0",
     "eslint": "^9.12.0",
     "eslint-config-prettier": "^9.1.0",
     "globals": "^15.11.0",
-    "prettier": "^3.3.3"
+    "prettier": "^3.3.3",
+    "vite": "^5.4.21"
+  },
+  "dependencies": {
+    "three": "^0.186.1"
   }
 }
