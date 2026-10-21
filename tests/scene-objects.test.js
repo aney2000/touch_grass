@@ -1,11 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import {
-  createSceneObjects,
-  createField,
-  addGust,
-  pruneGusts,
-} from "../src/scene-objects.js";
+import { createSceneObjects, createField, addGust, pruneGusts } from "../src/scene-objects.js";
 import { randomGenerator } from "../src/scene-math.js";
 import { COUNTS } from "../src/config.js";
 

@@ -241,9 +241,7 @@ function drawClouds(ctx, scene) {
 
 // Blend two hex colours by the current day amount and apply an alpha.
 function tintRgba(dayAmount, dayHex, nightHex, alpha) {
-  return mixHex(dayHex, nightHex, dayAmount)
-    .replace("rgb(", "rgba(")
-    .replace(")", `,${alpha})`);
+  return mixHex(dayHex, nightHex, dayAmount).replace("rgb(", "rgba(").replace(")", `,${alpha})`);
 }
 
 // Soft atmospheric band just above the hills so the distance reads hazier.
@@ -260,7 +258,14 @@ function drawHills(ctx, scene) {
   const { width, height, dayAmount } = scene;
   ctx.beginPath();
   ctx.moveTo(0, height * 0.72);
-  ctx.bezierCurveTo(width * 0.13, height * 0.58, width * 0.32, height * 0.75, width * 0.52, height * 0.67);
+  ctx.bezierCurveTo(
+    width * 0.13,
+    height * 0.58,
+    width * 0.32,
+    height * 0.75,
+    width * 0.52,
+    height * 0.67,
+  );
   ctx.bezierCurveTo(width * 0.72, height * 0.58, width * 0.88, height * 0.66, width, height * 0.56);
   ctx.lineTo(width, height);
   ctx.lineTo(0, height);
@@ -271,7 +276,14 @@ function drawHills(ctx, scene) {
 
   ctx.beginPath();
   ctx.moveTo(0, height * 0.76);
-  ctx.bezierCurveTo(width * 0.2, height * 0.67, width * 0.4, height * 0.8, width * 0.62, height * 0.72);
+  ctx.bezierCurveTo(
+    width * 0.2,
+    height * 0.67,
+    width * 0.4,
+    height * 0.8,
+    width * 0.62,
+    height * 0.72,
+  );
   ctx.bezierCurveTo(width * 0.81, height * 0.66, width * 0.91, height * 0.73, width, height * 0.68);
   ctx.lineTo(width, height);
   ctx.lineTo(0, height);
@@ -282,7 +294,14 @@ function drawHills(ctx, scene) {
 
   ctx.beginPath();
   ctx.moveTo(0, height * 0.82);
-  ctx.bezierCurveTo(width * 0.25, height * 0.72, width * 0.5, height * 0.86, width * 0.74, height * 0.78);
+  ctx.bezierCurveTo(
+    width * 0.25,
+    height * 0.72,
+    width * 0.5,
+    height * 0.86,
+    width * 0.74,
+    height * 0.78,
+  );
   ctx.bezierCurveTo(width * 0.86, height * 0.74, width * 0.94, height * 0.78, width, height * 0.74);
   ctx.lineTo(width, height);
   ctx.lineTo(0, height);
@@ -364,7 +383,8 @@ function drawGrass(ctx, scene, now) {
   const { width, height, dayAmount, gusts, field, prefersReducedMotion } = scene;
   const motionScale = prefersReducedMotion ? 0.24 : 1;
   for (const blade of field) {
-    const baseY = height * (0.746 + Math.sin((blade.x / Math.max(width, 1)) * 8 + blade.phase) * 0.022);
+    const baseY =
+      height * (0.746 + Math.sin((blade.x / Math.max(width, 1)) * 8 + blade.phase) * 0.022);
     const bladeHeight = blade.height * height;
     const bend = grassBend(blade, { gusts, height, now, motionScale });
     const tipX = blade.x + bend;
@@ -411,7 +431,14 @@ function drawVignette(ctx, scene) {
   const { width, height } = scene;
   const inner = Math.min(width, height) * 0.3;
   const outer = Math.max(width, height) * 0.78;
-  const v = ctx.createRadialGradient(width / 2, height * 0.52, inner, width / 2, height * 0.6, outer);
+  const v = ctx.createRadialGradient(
+    width / 2,
+    height * 0.52,
+    inner,
+    width / 2,
+    height * 0.6,
+    outer,
+  );
   v.addColorStop(0, "rgba(0,0,0,0)");
   v.addColorStop(1, "rgba(0,0,0,0.18)");
   ctx.fillStyle = v;

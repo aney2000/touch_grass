@@ -45,7 +45,10 @@ function updateClock() {
 }
 
 function updateThemeColor() {
-  themeColor.setAttribute("content", mixHex(dayPalette.skyTop, nightPalette.skyTop, model.dayAmount));
+  themeColor.setAttribute(
+    "content",
+    mixHex(dayPalette.skyTop, nightPalette.skyTop, model.dayAmount),
+  );
 }
 
 function frame(now = 0) {
