@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { cameraPoseAt, CAMERA_BASE } from "../src/camera-rig.js";
+import { cameraPoseAt, fovForAspect, CAMERA_BASE } from "../src/camera-rig.js";
 
 const still = { x: 0, y: 0 };
 
@@ -31,5 +31,19 @@ describe("cameraPoseAt", () => {
     const pose = cameraPoseAt(0, { x: 50, y: -50 }, { reducedMotion: true });
     assert.ok(Math.abs(pose.position[0] - CAMERA_BASE.position[0]) <= 1.2);
     assert.ok(Math.abs(pose.position[1] - CAMERA_BASE.position[1]) <= 0.6);
+  });
+});
+
+describe("fovForAspect", () => {
+  it("uses a cinematic field of view on landscape screens", () => {
+    assert.equal(fovForAspect(16 / 9), fovForAspect(2.4));
+  });
+
+  it("widens on portrait screens so the hill stays in frame", () => {
+    assert.ok(fovForAspect(0.5) > fovForAspect(16 / 9));
+  });
+
+  it("never exceeds a sensible maximum", () => {
+    assert.ok(fovForAspect(0.1) <= 80);
   });
 });

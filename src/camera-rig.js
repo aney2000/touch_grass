@@ -8,6 +8,18 @@ export const CAMERA_BASE = Object.freeze({
   target: Object.freeze([-4, 6, -50]),
 });
 
+const BASE_FOV = 50;
+const WIDEST_ASPECT_KEPT = 1.6;
+const MAX_FOV = 80;
+
+// Vertical FOV that preserves the landscape's horizontal framing on narrow screens.
+export function fovForAspect(aspect) {
+  if (aspect >= WIDEST_ASPECT_KEPT) return BASE_FOV;
+  const halfWidth = Math.tan((BASE_FOV * Math.PI) / 360) * WIDEST_ASPECT_KEPT;
+  const fov = (Math.atan(halfWidth / aspect) * 360) / Math.PI;
+  return Math.min(MAX_FOV, fov);
+}
+
 export function cameraPoseAt(seconds, pointer, { reducedMotion = false } = {}) {
   const px = clamp(pointer.x, -1, 1);
   const py = clamp(pointer.y, -1, 1);
