@@ -42,8 +42,16 @@ describe("atmosphereAt", () => {
 
   it("raises the moon as night falls", () => {
     assert.equal(atmosphereAt(0).moonIntensity, 0);
-    assert.ok(atmosphereAt(1).moonDirection[1] > 0.4);
+    assert.ok(atmosphereAt(1).moonDirection[1] > 0.25);
     assert.ok(atmosphereAt(1).moonIntensity > 0);
+  });
+
+  it("hangs the night moon low enough to sit inside the camera's view", () => {
+    const [x, y, z] = atmosphereAt(1).moonDirection;
+    const elevationDegrees = (Math.asin(y) * 180) / Math.PI;
+    const azimuthDegrees = (Math.atan2(x, -z) * 180) / Math.PI;
+    assert.ok(elevationDegrees > 12 && elevationDegrees < 24);
+    assert.ok(azimuthDegrees > 10 && azimuthDegrees < 32);
   });
 
   it("returns unit-length light directions", () => {

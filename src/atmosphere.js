@@ -36,7 +36,7 @@ const MOONLIGHT = hexToUnitRgb("#9fb6e8");
 
 // Sun arcs from high in the front-left down past the horizon; the moon rises front-right.
 const SUN_PATH = { elevation: [0.95, -0.32], azimuth: [-0.55, -0.95] };
-const MOON_PATH = { elevation: [-0.35, 0.82], azimuth: [0.65, 0.45] };
+const MOON_PATH = { elevation: [-0.35, 0.33], azimuth: [0.7, 0.38] };
 
 function directionFrom(elevation, azimuth) {
   const flat = Math.cos(elevation);
