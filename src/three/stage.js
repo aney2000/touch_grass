@@ -7,7 +7,7 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 
-const BLOOM_RADIUS = 0.55;
+const BLOOM_RADIUS = 0.4;
 
 export function createStage(canvas, { scene, camera }) {
   const renderer = new THREE.WebGLRenderer({ canvas, powerPreference: "high-performance" });

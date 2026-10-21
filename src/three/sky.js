@@ -45,11 +45,11 @@ const domeFragment = /* glsl */ `
 
     vec3 moonAxis = normalize(uMoonDirection);
     float moonAlign = max(dot(direction, moonAxis), 0.0);
-    color += uMoonColor * (pow(moonAlign, 260.0) * 0.45 + pow(moonAlign, 16.0) * 0.1) * uMoonVisibility;
-    float moonDisc = smoothstep(0.99955, 0.99972, moonAlign);
+    color += uMoonColor * (pow(moonAlign, 400.0) * 0.25 + pow(moonAlign, 24.0) * 0.06) * uMoonVisibility;
+    float moonDisc = smoothstep(0.99955, 0.99968, moonAlign);
     vec3 surface = direction - moonAxis * moonAlign;
-    float maria = 0.82 + 0.18 * sin(surface.x * 2100.0) * sin(surface.y * 1700.0 + 1.3);
-    color = mix(color, uMoonColor * 2.4 * maria, moonDisc * uMoonVisibility);
+    float maria = 0.8 + 0.2 * sin(surface.x * 2100.0) * sin(surface.y * 1700.0 + 1.3);
+    color = mix(color, vec3(1.0, 0.97, 0.88) * 1.25 * maria, moonDisc * uMoonVisibility);
 
     gl_FragColor = vec4(color, 1.0);
     #include <tonemapping_fragment>
