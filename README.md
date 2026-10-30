@@ -42,6 +42,17 @@ appear, and fireflies blink to life.
   the hero tree blossom, green, turn and go bare with the seasons
   (`src/forest.js`). `grove.canopies` lists canopy positions for particles and
   birds.
+- **Season changes** — a 7 s choreographed morph (1.2 s with reduced
+  motion) instead of a crossfade, opened by a soft breeze. Each channel (sky,
+  light, ground snow, grass snow, grass colour and height, foliage colour and
+  density, blossom, particles) eases in its own window
+  (`src/season-choreography.js`): into winter the leaves turn, then fall, the
+  sky cools, snow settles on the blade tips before the ground and the grass
+  shortens last; into spring the ground melts, then the tips, the grass greens
+  and grows and blossoms open last. Going backwards plays the film in reverse,
+  and a two-season jump walks through the season in between. Like day/night,
+  the sky, sun and haze move too: soft fresh spring, the classic summer sky,
+  golden hazy autumn, pale cold winter with a lower, weaker sun.
 - **Falling particles** — none in summer. In spring and autumn each deciduous
   tree (conifers don't shed) drops petals or leaves from its own canopy at
   about one per second; they drift within ~2.5 canopy radii of their tree,
@@ -140,6 +151,7 @@ src/
   input.js            Pointer controller: parallax, touch, and gusts
   zen.js              Zen mode timer and countdown formatting
   seasons.js          Season ring, blend weights, and blended season looks
+  season-choreography.js  Per-channel timing and easing of a season morph
   ui/
     shortcuts.js      Single-key shortcuts that ignore modifiers and typing
     clock-view.js     Renders the clock as text
