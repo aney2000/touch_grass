@@ -5,7 +5,7 @@ import * as THREE from "three";
 import { setSrgb } from "./color.js";
 import { findCrest } from "../terrain.js";
 import { hexToUnitRgb, mixRgb, randomGenerator } from "../scene-math.js";
-import { plantGrove } from "../grove.js";
+import { plantForest, canopyAppearance, TREE_SPECIES } from "../forest.js";
 
 const SITE = { xMin: 22, xMax: 60, zMin: -100, zMax: -70 };
 const TRUNK_HEIGHT = 5.5;
@@ -40,10 +40,12 @@ const BLOSSOM_PINK = hexToUnitRgb("#f6c9d8");
 const BLOSSOM_WHITE = hexToUnitRgb("#fff3f6");
 const NIGHT_TINT = hexToUnitRgb("#3a4660");
 const WHITE = [1, 1, 1];
-const DEFAULT_FOLIAGE = { color: LEAF_DAY, density: 1, blossom: 0 };
+const DEFAULT_LOOK = { foliage: { color: LEAF_DAY, density: 1, blossom: 0 }, snowCover: 0 };
 
-export function createGrove({ count = 22, seed = 2207 } = {}) {
-  const trees = plantGrove({ seed, count });
+export function createGrove({ count = 36, seed = 2207 } = {}) {
+  const { trees: all, canopies } = plantForest({ seed, count });
+  const trees = all.filter((tree) => tree.species === "deciduous");
+  const pines = all.filter((tree) => tree.species === "conifer");
   const random = randomGenerator(seed + 1);
   const bark = new THREE.MeshStandardMaterial({ roughness: 1 });
   const foliage = new THREE.MeshStandardMaterial({ roughness: 0.9, flatShading: true });
@@ -53,13 +55,20 @@ export function createGrove({ count = 22, seed = 2207 } = {}) {
   const branchGeometry = new THREE.CylinderGeometry(0.03, 0.08, 1, 4);
   branchGeometry.translate(0, 0.5, 0);
   const blobGeometry = new THREE.IcosahedronGeometry(1, 1);
+  const coneGeometry = new THREE.ConeGeometry(1, 1, 7);
+  coneGeometry.translate(0, 0.5, 0);
 
-  const trunks = new THREE.InstancedMesh(trunkGeometry, bark, trees.length);
+  const trunks = new THREE.InstancedMesh(trunkGeometry, bark, all.length);
   const branches = new THREE.InstancedMesh(branchGeometry, bark, trees.length * BRANCHES.length);
   const canopy = new THREE.InstancedMesh(blobGeometry, foliage, trees.length * CANOPY_BLOBS);
+  const conifers = new THREE.InstancedMesh(coneGeometry, foliage, pines.length);
   trunks.name = "grove-trunks";
   branches.name = "grove-branches";
   canopy.name = "grove-canopy";
+  conifers.name = "grove-conifers";
+  // Instances span ~200 m while the base geometry is ~1 m, so three's default
+  // bounds would cull the whole forest from a single unit sphere.
+  for (const mesh of [trunks, branches, canopy, conifers]) mesh.frustumCulled = false;
 
   const matrix = new THREE.Matrix4();
   const quaternion = new THREE.Quaternion();
@@ -67,10 +76,17 @@ export function createGrove({ count = 22, seed = 2207 } = {}) {
   const position = new THREE.Vector3();
   const scale = new THREE.Vector3();
 
-  trees.forEach((tree, i) => {
+  all.forEach((tree, i) => {
     position.set(tree.x, tree.y - 0.2, tree.z);
     scale.set(tree.scale, tree.trunkHeight, tree.scale);
     trunks.setMatrixAt(i, matrix.compose(position, quaternion.identity(), scale));
+  });
+  pines.forEach((tree, i) => {
+    position.set(tree.x, tree.y + tree.trunkHeight * 0.6, tree.z);
+    scale.set(tree.canopyRadius, tree.canopyRadius * 3.2, tree.canopyRadius);
+    conifers.setMatrixAt(i, matrix.compose(position, quaternion.identity(), scale));
+  });
+  trees.forEach((tree, i) => {
     BRANCHES.forEach(([tilt, heightFraction], b) => {
       position.set(tree.x, tree.y + tree.trunkHeight * heightFraction * 0.7, tree.z);
       euler.set(tilt * 0.4, random() * Math.PI * 2, tilt);
@@ -104,26 +120,36 @@ export function createGrove({ count = 22, seed = 2207 } = {}) {
     canopy.instanceMatrix.needsUpdate = true;
   };
 
-  const paintCanopy = ({ color: leaf, blossom }) => {
+  const paintConifers = (look) => {
+    pines.forEach((tree, i) => {
+      const { color: rgb } = canopyAppearance(look, TREE_SPECIES.conifer, 1 + tree.hue);
+      conifers.setColorAt(i, setSrgb(color, rgb));
+    });
+    if (conifers.instanceColor) conifers.instanceColor.needsUpdate = true;
+  };
+
+  const paintCanopy = (look) => {
+    const { blossom } = look.foliage;
     for (let i = 0; i < canopy.count; i += 1) {
       const tree = trees[Math.floor(i / CANOPY_BLOBS)];
       const shade = shades[i] * (1 + tree.hue);
-      let rgb = leaf.map((channel) => Math.min(1, channel * shade));
+      let { color: rgb } = canopyAppearance(look, TREE_SPECIES.deciduous, shade);
       if (blossom > 0) {
         const petal = mixRgb(BLOSSOM_PINK, BLOSSOM_WHITE, speckles[i]);
         rgb = mixRgb(rgb, petal, Math.min(1, blossom * (0.6 + speckles[i] * 0.8)));
       }
       canopy.setColorAt(i, setSrgb(color, rgb));
     }
-    canopy.instanceColor.needsUpdate = true;
+    if (canopy.instanceColor) canopy.instanceColor.needsUpdate = true;
   };
 
   placeCanopy(1);
-  paintCanopy(DEFAULT_FOLIAGE);
+  paintCanopy(DEFAULT_LOOK);
+  paintConifers(DEFAULT_LOOK);
 
   const object = new THREE.Group();
   object.name = "grove";
-  object.add(trunks, branches, canopy);
+  object.add(trunks, branches, canopy, conifers);
 
   let lastKey = "";
   let lastLook = null;
@@ -133,22 +159,27 @@ export function createGrove({ count = 22, seed = 2207 } = {}) {
     trunks,
     branches,
     canopy,
+    conifers,
+    canopies,
     foliage,
     update({ atmosphere, season }) {
-      const look = season?.look?.foliage ?? DEFAULT_FOLIAGE;
+      const look = season?.look?.foliage ? season.look : DEFAULT_LOOK;
       // The scene reuses its look object while the season rests, so identity
       // skips the string key (and its allocation) on almost every frame.
       if (look !== lastLook) {
         lastLook = look;
-        const key = `${look.color.join()}|${look.density}|${look.blossom}`;
+        const { color: leaf, density, blossom } = look.foliage;
+        const key = `${leaf.join()}|${density}|${blossom}|${look.snowCover ?? 0}`;
         if (key !== lastKey) {
           lastKey = key;
-          canopy.visible = look.density > 0.04;
-          branches.visible = look.density < 0.7;
+          const seasonal = canopyAppearance(look, TREE_SPECIES.deciduous);
+          canopy.visible = seasonal.visible;
+          branches.visible = density < 0.7;
           if (canopy.visible) {
-            placeCanopy(0.15 + 0.85 * look.density);
+            placeCanopy(seasonal.scale);
             paintCanopy(look);
           }
+          paintConifers(look);
         }
       }
       if (atmosphere.dayAmount !== lastDayAmount) {
@@ -162,9 +193,10 @@ export function createGrove({ count = 22, seed = 2207 } = {}) {
       trunkGeometry.dispose();
       branchGeometry.dispose();
       blobGeometry.dispose();
+      coneGeometry.dispose();
       bark.dispose();
       foliage.dispose();
-      for (const mesh of [trunks, branches, canopy]) mesh.dispose();
+      for (const mesh of [trunks, branches, canopy, conifers]) mesh.dispose();
     },
   };
 }
@@ -197,11 +229,16 @@ export function createTree() {
     object,
     canopy,
     foliage,
-    update({ seconds, atmosphere, motionScale = 1 }) {
+    update({ seconds, atmosphere, season, motionScale = 1 }) {
       const sway = motionScale ? Math.sin(seconds * 0.7) * 0.035 * motionScale : 0;
       canopy.rotation.z = sway;
       canopy.rotation.x = sway * 0.4;
-      setSrgb(foliage.color, mixRgb(LEAF_DAY, LEAF_NIGHT, atmosphere.dayAmount));
+      const look = season?.look?.foliage ? season.look : DEFAULT_LOOK;
+      const leaf = canopyAppearance(look, TREE_SPECIES.deciduous);
+      canopy.visible = leaf.visible;
+      canopy.scale.setScalar(leaf.scale);
+      const night = mixRgb(leaf.color, LEAF_NIGHT, 0.6);
+      setSrgb(foliage.color, mixRgb(leaf.color, night, atmosphere.dayAmount));
       setSrgb(bark.color, mixRgb(BARK_DAY, BARK_NIGHT, atmosphere.dayAmount));
     },
     dispose() {

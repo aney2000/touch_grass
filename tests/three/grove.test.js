@@ -33,7 +33,7 @@ describe("createGrove", () => {
   it("instances one trunk and several canopy blobs per tree", () => {
     const grove = createGrove({ count: 20 });
     assert.equal(grove.trunks.count, 20);
-    assert.equal(grove.canopy.count, 20 * CANOPY_BLOBS);
+    assert.equal(grove.canopy.count + grove.conifers.count * CANOPY_BLOBS, 20 * CANOPY_BLOBS);
     assert.ok(grove.trunks instanceof THREE.InstancedMesh);
     assert.ok(grove.canopy.instanceColor);
   });
@@ -84,6 +84,35 @@ describe("createGrove", () => {
     assert.equal(grove.canopy.instanceMatrix.version, version);
     grove.update(frame(2.5));
     assert.ok(grove.canopy.instanceMatrix.version > version);
+  });
+
+  it("plants conifer cones beside deciduous canopies and exposes canopies", () => {
+    const grove = createGrove({ count: 36 });
+    assert.equal(grove.canopies.length, 36);
+    const conifers = grove.canopies.filter((c) => c.species === "conifer").length;
+    assert.ok(conifers > 0);
+    assert.equal(grove.conifers.count, conifers);
+    assert.equal(grove.canopy.count, (36 - conifers) * CANOPY_BLOBS);
+  });
+
+  it("never frustum-culls the spread-out instanced meshes", () => {
+    const grove = createGrove({ count: 24 });
+    for (const mesh of [grove.trunks, grove.branches, grove.canopy, grove.conifers]) {
+      assert.equal(mesh.frustumCulled, false, mesh.name);
+    }
+  });
+
+  it("keeps conifers green in winter, dusted with snow", () => {
+    const grove = createGrove({ count: 36 });
+    grove.update(frame(SUMMER));
+    const summer = new THREE.Color();
+    grove.conifers.getColorAt(0, summer);
+    grove.update(frame(WINTER));
+    assert.equal(grove.conifers.visible, true);
+    const winter = new THREE.Color();
+    grove.conifers.getColorAt(0, winter);
+    assert.ok(winter.g > winter.r);
+    assert.ok(winter.getHSL({}).l > summer.getHSL({}).l, "snow lightens");
   });
 
   it("skips night tint work while the day amount is unchanged", () => {
