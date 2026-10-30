@@ -32,6 +32,8 @@ export const twilightPalette = {
 export const DAY_NIGHT_MS = 4200;
 export const REDUCED_MOTION_DAY_NIGHT_MS = 1100;
 
+export const SEASONS = Object.freeze(["spring", "summer", "autumn", "winter"]);
+
 // Season morphs are slower than day/night: the whole meadow changes over.
 export const SEASON_MS = 3500;
 export const REDUCED_MOTION_SEASON_MS = 1000;

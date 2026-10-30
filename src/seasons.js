@@ -4,11 +4,9 @@
 // two neighbouring seasons. Pure and DOM/WebGL-free.
 
 import { hexToUnitRgb } from "./scene-math.js";
-import { SEASON_LOOKS } from "./config.js";
+import { SEASON_LOOKS, SEASONS } from "./config.js";
 
-export { SEASON_LOOKS };
-
-export const SEASONS = Object.freeze(["spring", "summer", "autumn", "winter"]);
+export { SEASON_LOOKS, SEASONS };
 
 const RING = SEASONS.length;
 const PARTICLE_KINDS = ["petals", "leaves", "snow"];
