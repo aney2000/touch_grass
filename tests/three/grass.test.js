@@ -6,6 +6,9 @@ import { terrainHeight } from "../../src/terrain.js";
 import { gustUniforms, GUST_LIMIT } from "../../src/wind.js";
 import { setSrgb } from "../../src/three/color.js";
 import { atmosphereAt } from "../../src/atmosphere.js";
+import { seasonBlendAt, seasonLook } from "../../src/seasons.js";
+
+const season = (position) => ({ look: seasonLook(seasonBlendAt(position)) });
 
 function frame(overrides = {}) {
   return {
@@ -14,6 +17,7 @@ function frame(overrides = {}) {
     motionScale: 1,
     wind: { gusts: gustUniforms([], 0), touch: { x: 0, z: 0, strength: 0 } },
     fireflies: [],
+    season: season(1),
     ...overrides,
   };
 }
@@ -90,5 +94,25 @@ describe("createGrass", () => {
     const { uMotion, uTime } = grass.object.material.uniforms;
     assert.equal(uMotion.value, 0.25);
     assert.equal(uTime.value, 9);
+  });
+
+  it("grows the blades to the season's grass height", () => {
+    grass.update(frame({ season: season(1) }));
+    assert.equal(grass.object.material.uniforms.uHeightScale.value, 1.15);
+    grass.update(frame({ season: season(3) }));
+    assert.equal(grass.object.material.uniforms.uHeightScale.value, 0.25);
+  });
+
+  it("dusts the blade tips with the season's snow cover", () => {
+    grass.update(frame({ season: season(1) }));
+    assert.equal(grass.object.material.uniforms.uSnow.value, 0);
+    grass.update(frame({ season: season(2.5) }));
+    assert.equal(grass.object.material.uniforms.uSnow.value, 0.5);
+  });
+
+  it("keeps full height and no snow when the frame carries no season", () => {
+    grass.update(frame({ season: undefined }));
+    assert.equal(grass.object.material.uniforms.uHeightScale.value, 1);
+    assert.equal(grass.object.material.uniforms.uSnow.value, 0);
   });
 });

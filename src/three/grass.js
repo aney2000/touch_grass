@@ -22,6 +22,7 @@ const vertexShader = /* glsl */ `
   uniform float uMotion;
   uniform vec4 uGusts[GUST_LIMIT]; // x, z, age (s), strength
   uniform vec3 uTouch; // x, z, strength
+  uniform float uHeightScale; // season: short winter stubble .. tall summer meadow
   varying float vHeight;
   varying float vShade;
   varying vec3 vWorld;
@@ -37,7 +38,8 @@ const vertexShader = /* glsl */ `
     float h = position.y;
     float yaw = aParams.z;
     vec2 facing = vec2(cos(yaw), sin(yaw));
-    vec3 world = aRoot + vec3(position.x * aParams.y * facing.x, h * aParams.x, position.x * aParams.y * facing.y);
+    float bladeHeight = aParams.x * uHeightScale;
+    vec3 world = aRoot + vec3(position.x * aParams.y * facing.x, h * bladeHeight, position.x * aParams.y * facing.y);
 
     vec2 bend = vec2(cos(aParams.w), sin(aParams.w)) * 0.18;
     float roll = sin(uTime * 0.9 - aRoot.x * 0.11 + aRoot.z * 0.07);
@@ -57,9 +59,11 @@ const vertexShader = /* glsl */ `
     float press = uTouch.z * smoothstep(2.4, 0.2, length(fromHand));
     bend += safeDirection(fromHand) * press * 1.8;
 
+    // Short blades are stiffer, so they sway a little less than their height alone implies.
+    bend *= mix(0.7, 1.0, clamp(uHeightScale, 0.0, 1.0));
     float stiffness = h * h;
-    world.xz += bend * stiffness * aParams.x;
-    world.y -= dot(bend, bend) * stiffness * aParams.x * 0.22;
+    world.xz += bend * stiffness * bladeHeight;
+    world.y -= dot(bend, bend) * stiffness * bladeHeight * 0.22;
 
     vHeight = h;
     vShade = aShade;
@@ -87,6 +91,7 @@ const fragmentShader = /* glsl */ `
   uniform float uAmbient;
   uniform vec4 uLanterns[MAX_LANTERNS]; // x, y, z, glow
   uniform vec3 uLanternColor;
+  uniform float uSnow; // season snow cover, 0..1
   varying float vHeight;
   varying float vShade;
   varying vec3 vWorld;
@@ -98,6 +103,9 @@ const fragmentShader = /* glsl */ `
   void main() {
     vec3 albedo = mix(uBaseColor, uTipColor, smoothstep(0.0, 1.0, vHeight)) * vShade;
     albedo *= mix(0.45, 1.0, vHeight);
+    // Snow settles on the tips; the lighting below turns it moonlit blue at night.
+    float frost = uSnow * smoothstep(0.15, 0.85, vHeight) * mix(0.75, 1.0, vShade - 0.75);
+    albedo = mix(albedo, vec3(0.86, 0.9, 0.95), clamp(frost, 0.0, 1.0));
     vec3 normal = normalize(vNormal);
 
     vec3 light = uSkyColor * uAmbient * mix(0.6, 1.0, normal.y);
@@ -196,6 +204,8 @@ export function createGrass({ count = 60000 } = {}) {
       {
         uTime: { value: 0 },
         uMotion: { value: 1 },
+        uHeightScale: { value: 1 },
+        uSnow: { value: 0 },
         uTouch: { value: new THREE.Vector3() },
         uBaseColor: { value: new THREE.Color() },
         uTipColor: { value: new THREE.Color() },
@@ -234,10 +244,12 @@ export function createGrass({ count = 60000 } = {}) {
 
   return {
     object,
-    update({ seconds, atmosphere, motionScale = 1, wind, fireflies = [] }) {
+    update({ seconds, atmosphere, motionScale = 1, wind, fireflies = [], season }) {
       const u = material.uniforms;
       u.uTime.value = seconds;
       u.uMotion.value = motionScale;
+      u.uHeightScale.value = season?.look.grassHeight ?? 1;
+      u.uSnow.value = season?.look.snowCover ?? 0;
 
       if (wind) {
         u.uGusts.value.forEach((gust, index) => gust.fromArray(wind.gusts, index * 4));
