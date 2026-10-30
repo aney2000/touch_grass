@@ -91,6 +91,30 @@ describe("createPointerInput", () => {
     assert.ok(!classes.has("scene--touching"));
   });
 
+  it("sends a ripple on a brisk touch swipe too", () => {
+    const { canvas, calls } = fakeEnvironment();
+    canvas.dispatchEvent(pointer("pointermove", 50, 80, "touch"));
+    canvas.dispatchEvent(pointer("pointermove", 90, 80, "touch"));
+    assert.equal(calls.gusts.length, 1);
+  });
+
+  it("does not treat a new finger far away as a swipe", () => {
+    const { canvas, calls } = fakeEnvironment();
+    canvas.dispatchEvent(pointer("pointermove", 10, 80, "touch"));
+    canvas.dispatchEvent(pointer("pointerdown", 180, 80, "touch"));
+    canvas.dispatchEvent(pointer("pointermove", 182, 80, "touch"));
+    assert.equal(calls.gusts.length, 1, "only the tap ripple");
+  });
+
+  it("treats a cancelled pointer like one that left", () => {
+    const { canvas, calls, classes } = fakeEnvironment();
+    canvas.dispatchEvent(pointer("pointermove", 100, 80, "touch"));
+    canvas.dispatchEvent(pointer("pointercancel", 0, 0, "touch"));
+    assert.equal(calls.touches.at(-1), null);
+    assert.deepEqual(calls.pointers.at(-1), { x: 0, y: 0 });
+    assert.ok(!classes.has("scene--touching"));
+  });
+
   it("stops listening once disposed", () => {
     const { canvas, calls, input } = fakeEnvironment();
     input.dispose();

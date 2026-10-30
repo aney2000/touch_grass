@@ -29,7 +29,7 @@ export function createPointerInput({ canvas, sceneElement, model, pick }) {
     model.setPointer(ndc);
     setTouching(hit);
 
-    if (hit && previousX !== null && event.pointerType !== "touch") {
+    if (hit && previousX !== null) {
       const deltaX = event.clientX - previousX;
       if (Math.abs(deltaX) > MIN_SWIPE_PX) {
         model.pushGust(hit, Math.min(1, 0.35 + Math.abs(deltaX) / 150), model.now);
@@ -41,6 +41,8 @@ export function createPointerInput({ canvas, sceneElement, model, pick }) {
   function onPointerDown(event) {
     const { hit } = locate(event);
     if (hit) model.pushGust(hit, 0.9, model.now);
+    // A new finger starts a fresh stroke rather than a swipe from the last one.
+    previousX = event.clientX;
   }
 
   function onPointerLeave() {
@@ -52,12 +54,14 @@ export function createPointerInput({ canvas, sceneElement, model, pick }) {
   canvas.addEventListener("pointermove", onPointerMove);
   canvas.addEventListener("pointerdown", onPointerDown);
   canvas.addEventListener("pointerleave", onPointerLeave);
+  canvas.addEventListener("pointercancel", onPointerLeave);
 
   return {
     dispose() {
       canvas.removeEventListener("pointermove", onPointerMove);
       canvas.removeEventListener("pointerdown", onPointerDown);
       canvas.removeEventListener("pointerleave", onPointerLeave);
+      canvas.removeEventListener("pointercancel", onPointerLeave);
     },
   };
 }
