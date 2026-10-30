@@ -31,6 +31,13 @@ appear, and fireflies blink to life.
   star. Press <kbd>C</kbd> to fade in their lines and names, or tap a
   constellation star to outline it for a few seconds; screen readers hear
   which one you spotted.
+- **Forest** — a small forest of 24/36/48 trees (by quality tier) in a few
+  copses and a forest edge, planted only where the resting camera sees them
+  (in view, not behind the hills), with the centre meadow kept clear. About a
+  quarter are conifers that stay green and gather snow; deciduous trees and
+  the hero tree blossom, green, turn and go bare with the seasons
+  (`src/forest.js`). `grove.canopies` lists canopy positions for particles and
+  birds.
 - **Graceful fallback** — without WebGL, a CSS rendition of the field remains.
 
 ## Controls
