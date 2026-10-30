@@ -1,6 +1,7 @@
 // Composition root: wires the DOM to the scene model, the 3D world, and input,
 // then runs the animation loop. All the heavy lifting lives in ./src.
 
+import { markScriptReady } from "./src/ui/script-ready.js";
 import { Scene } from "./src/scene.js";
 import { createPointerInput, toNdc } from "./src/input.js";
 import { createRenderLoop, bindContextLoss } from "./src/loop.js";
@@ -38,6 +39,8 @@ import { bindConstellationToggle } from "./src/ui/constellation-toggle.js";
 import { chooseQuality, stepDown, stageOptionsFor } from "./src/quality.js";
 import { createFrameGovernor } from "./src/frame-governor.js";
 import { particleBudget } from "./src/particle-budget.js";
+
+markScriptReady(document.documentElement);
 
 const sceneElement = document.querySelector(".scene");
 const canvas = document.querySelector("#meadow");

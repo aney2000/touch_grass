@@ -162,6 +162,14 @@ describe("no-JS and CSP", () => {
     assert.match(css, /html\.no-js \.scene-dock\s*\{[^}]*display:\s*none/);
   });
 
+  it("has the composition root clear no-js before it touches anything else", () => {
+    const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
+    const firstStatement = app
+      .split("\n")
+      .find((line) => line.trim() && !/^(import|\/\/|\s|\}|from)/.test(line));
+    assert.equal(firstStatement, "markScriptReady(document.documentElement);");
+  });
+
   it("uses no inline style attributes or style elements", () => {
     assert.doesNotMatch(html, /\sstyle="/);
     assert.doesNotMatch(html, /<style/);
