@@ -3,6 +3,7 @@
 
 import * as THREE from "three";
 import { createFallingField, stepFalling, fallingSpawners } from "../falling.js";
+import { screenSizeGlsl } from "./screen-size.js";
 
 const MAX_STEP_SEC = 0.1;
 // Leaves are real-sized (~0.15 m) within this distance of the camera.
@@ -16,11 +17,12 @@ const flakeVertex = /* glsl */ `
   uniform float uNearDistance;
   varying vec2 vUv;
   varying vec3 vColor;
+  ${screenSizeGlsl}
   void main() {
     vUv = uv;
     vColor = instanceColor;
     vec3 centre = (modelMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
-    float grow = max(1.0, distance(centre, cameraPosition) / uNearDistance);
+    float grow = screenSizeGrow(centre, uNearDistance);
     gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position * grow, 1.0);
   }
 `;
