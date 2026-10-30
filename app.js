@@ -23,14 +23,13 @@ import { createTree } from "./src/three/tree.js";
 import { createGrass } from "./src/three/grass.js";
 import { createFireflyLights } from "./src/three/fireflies.js";
 import { createClockView } from "./src/ui/clock-view.js";
+import { bindDayNightToggle } from "./src/ui/day-night-toggle.js";
 
 const COMPACT_SCREEN_PX = 700;
 const MAX_PIXEL_RATIO = 1.75;
 
 const sceneElement = document.querySelector(".scene");
 const canvas = document.querySelector("#meadow");
-const toggle = document.querySelector("#scene-toggle");
-const toggleLabel = document.querySelector(".scene-toggle__label");
 const clockView = createClockView({
   timeElement: document.querySelector(".scene-clock__time"),
   meridiemElement: document.querySelector(".scene-clock__meridiem"),
@@ -98,20 +97,14 @@ function frame(now = 0) {
   window.requestAnimationFrame(frame);
 }
 
-function toggleNight() {
-  const night = model.toggleNight(model.now);
-  toggle.setAttribute("aria-pressed", String(night === 1));
-  toggleLabel.textContent = night ? "Let morning in" : "Let night fall";
-  sceneElement.classList.toggle("scene--night", night === 1);
-}
-
-toggle.addEventListener("click", toggleNight);
-
-// Keyboard affordance: press "n" anywhere to switch between day and night.
-window.addEventListener("keydown", (event) => {
-  if (event.key.toLowerCase() === "n" && !event.metaKey && !event.ctrlKey && !event.altKey) {
-    toggleNight();
-  }
+// The button, or the N key anywhere, switches between day and night.
+bindDayNightToggle({
+  button: document.querySelector("#scene-toggle"),
+  label: document.querySelector(".scene-toggle__label"),
+  sceneElement,
+  model,
+  keyTarget: window,
+  now: () => model.now,
 });
 
 reducedMotion.addEventListener("change", (event) => {
