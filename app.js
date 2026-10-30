@@ -25,6 +25,7 @@ import { createFireflyLights } from "./src/three/fireflies.js";
 import { createClockView } from "./src/ui/clock-view.js";
 import { bindDayNightToggle } from "./src/ui/day-night-toggle.js";
 import { bindZenMode } from "./src/ui/zen-mode.js";
+import { bindSeasonPicker } from "./src/ui/season-picker.js";
 
 const COMPACT_SCREEN_PX = 700;
 const MAX_PIXEL_RATIO = 1.75;
@@ -118,6 +119,19 @@ const zenMode = bindZenMode({
   sceneElement,
   keyTarget: window,
   now: () => model.now,
+});
+
+// The season buttons, or keys 1-4, morph the meadow through the year.
+bindSeasonPicker({
+  buttons: [...document.querySelectorAll(".season-button")].map((element) => ({
+    season: element.dataset.season,
+    element,
+  })),
+  sceneElement,
+  model,
+  keyTarget: window,
+  now: () => model.now,
+  announcer: document.querySelector("#season-status"),
 });
 
 reducedMotion.addEventListener("change", (event) => {

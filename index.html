@@ -24,8 +24,9 @@
 
       <p class="sr-only">
         Move your cursor across the grass to stir the breeze. Use the buttons below, or press the N
-        key, to switch between day and night, and the Z key for a minute of zen with nothing on
-        screen. Press Escape to leave zen early.
+        key, to switch between day and night, the 1 to 4 keys to pick spring, summer, autumn or
+        winter, and the Z key for a minute of zen with nothing on screen. Press Escape to leave zen
+        early.
       </p>
 
       <header class="masthead">
@@ -67,6 +68,56 @@
             <span class="zen-toggle__icon" aria-hidden="true"></span>
             <span>Zen</span>
           </button>
+          <div class="season-picker" role="group" aria-label="Season">
+            <button
+              class="dock-button season-button"
+              data-season="spring"
+              type="button"
+              aria-pressed="false"
+              aria-label="Spring"
+              aria-keyshortcuts="1"
+              title="Spring (1)"
+            >
+              <span class="season-button__dot" aria-hidden="true"></span>
+              <span class="season-button__label" aria-hidden="true">Spring</span>
+            </button>
+            <button
+              class="dock-button season-button"
+              data-season="summer"
+              type="button"
+              aria-pressed="true"
+              aria-label="Summer"
+              aria-keyshortcuts="2"
+              title="Summer (2)"
+            >
+              <span class="season-button__dot" aria-hidden="true"></span>
+              <span class="season-button__label" aria-hidden="true">Summer</span>
+            </button>
+            <button
+              class="dock-button season-button"
+              data-season="autumn"
+              type="button"
+              aria-pressed="false"
+              aria-label="Autumn"
+              aria-keyshortcuts="3"
+              title="Autumn (3)"
+            >
+              <span class="season-button__dot" aria-hidden="true"></span>
+              <span class="season-button__label" aria-hidden="true">Autumn</span>
+            </button>
+            <button
+              class="dock-button season-button"
+              data-season="winter"
+              type="button"
+              aria-pressed="false"
+              aria-label="Winter"
+              aria-keyshortcuts="4"
+              title="Winter (4)"
+            >
+              <span class="season-button__dot" aria-hidden="true"></span>
+              <span class="season-button__label" aria-hidden="true">Winter</span>
+            </button>
+          </div>
         </div>
       </footer>
 
@@ -85,6 +136,7 @@
         <span class="zen-countdown__time" aria-hidden="true">1:00</span>
       </button>
       <p class="sr-only" id="zen-status" aria-live="polite"></p>
+      <p class="sr-only" id="season-status" aria-live="polite"></p>
     </main>
     <noscript
       >This little field needs JavaScript to move. It will be here when you're ready.</noscript

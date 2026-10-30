@@ -41,6 +41,34 @@ describe("scene control dock", () => {
   });
 });
 
+describe("season picker", () => {
+  const SEASON_KEYS = { spring: 1, summer: 2, autumn: 3, winter: 4 };
+
+  it("sits in the dock as a labelled group", () => {
+    const footer = elementBlock(/<footer class="scene-controls"/, "footer");
+    assert.match(footer, /<div class="season-picker" role="group" aria-label="Season"/);
+  });
+
+  it("offers one button per season with its number shortcut and a coloured dot", () => {
+    const picker = elementBlock(/<div class="season-picker"/, "div");
+    for (const [season, key] of Object.entries(SEASON_KEYS)) {
+      const button = picker.match(
+        new RegExp(`<button[^>]*data-season="${season}"[^>]*>[\\s\\S]*?</button>`),
+      );
+      assert.ok(button, `expected a ${season} button`);
+      assert.match(button[0], /class="dock-button season-button"/);
+      assert.match(button[0], new RegExp(`aria-keyshortcuts="${key}"`));
+      assert.match(button[0], /aria-label="[A-Z][a-z]+"/);
+      assert.match(button[0], /class="season-button__dot" aria-hidden="true"/);
+    }
+  });
+
+  it("keeps the season labels on narrow screens accessible by hiding only the text", () => {
+    const narrow = css.slice(css.indexOf("@media (max-width: 600px)"));
+    assert.match(narrow, /\.season-button__label\s*\{[^}]*display:\s*none/);
+  });
+});
+
 describe("zen mode shell", () => {
   it("offers a Zen toggle button in the dock", () => {
     const dock = elementBlock(/<div class="scene-dock"/, "div");

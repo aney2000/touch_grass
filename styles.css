@@ -254,6 +254,40 @@ a {
   content: "";
 }
 
+.season-picker {
+  display: flex;
+  gap: 4px;
+}
+
+.season-button {
+  gap: 8px;
+  padding: 0 13px;
+}
+
+.season-button__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--season-dot);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 14%);
+}
+
+.season-button[data-season="spring"] {
+  --season-dot: #f2a7c3;
+}
+
+.season-button[data-season="summer"] {
+  --season-dot: #4e9a24;
+}
+
+.season-button[data-season="autumn"] {
+  --season-dot: #d0662a;
+}
+
+.season-button[data-season="winter"] {
+  --season-dot: #dfe9f0;
+}
+
 .scene--night .wordmark__mark::after {
   background: #7c9d83;
 }
@@ -316,6 +350,15 @@ a {
     min-height: 44px;
     padding: 0 14px;
     font-size: 12px;
+  }
+
+  /* Icon-only seasons; each button keeps its aria-label. */
+  .season-button {
+    padding: 0 14px;
+  }
+
+  .season-button__label {
+    display: none;
   }
 }
 
