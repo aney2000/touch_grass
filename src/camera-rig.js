@@ -10,7 +10,13 @@ export const CAMERA_BASE = Object.freeze({
 
 const BASE_FOV = 50;
 const WIDEST_ASPECT_KEPT = 1.6;
-const MAX_FOV = 80;
+// Wider than this looks like a fisheye; portrait framing comes from pulling back.
+const MAX_FOV = 70;
+// Below this aspect the camera starts retreating; at PORTRAIT_FULL it is fully back.
+const PORTRAIT_START = 1;
+const PORTRAIT_FULL = 0.46;
+const PULL_BACK = 6;
+const RISE = 1.4;
 
 // Vertical FOV that preserves the landscape's horizontal framing on narrow screens.
 export function fovForAspect(aspect) {
@@ -20,12 +26,24 @@ export function fovForAspect(aspect) {
   return Math.min(MAX_FOV, fov);
 }
 
-export function cameraPoseAt(seconds, pointer, { reducedMotion = false } = {}) {
+// Resting pose for a screen shape: portrait screens step back and up so the
+// capped FOV still shows the hill and the tree instead of cropping them.
+export function basePoseForAspect(aspect = 16 / 9) {
+  const portrait = clamp((PORTRAIT_START - aspect) / (PORTRAIT_START - PORTRAIT_FULL), 0, 1);
+  const [x, y, z] = CAMERA_BASE.position;
+  return {
+    position: [x, y + RISE * portrait, z + PULL_BACK * portrait],
+    target: [...CAMERA_BASE.target],
+  };
+}
+
+export function cameraPoseAt(seconds, pointer, { reducedMotion = false, aspect } = {}) {
   const px = clamp(pointer.x, -1, 1);
   const py = clamp(pointer.y, -1, 1);
   const drift = reducedMotion ? 0 : 1;
-  const [x, y, z] = CAMERA_BASE.position;
-  const [tx, ty, tz] = CAMERA_BASE.target;
+  const base = basePoseForAspect(aspect);
+  const [x, y, z] = base.position;
+  const [tx, ty, tz] = base.target;
 
   return {
     position: [

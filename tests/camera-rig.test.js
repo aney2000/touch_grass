@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { cameraPoseAt, fovForAspect, CAMERA_BASE } from "../src/camera-rig.js";
+import { cameraPoseAt, fovForAspect, basePoseForAspect, CAMERA_BASE } from "../src/camera-rig.js";
 
 const still = { x: 0, y: 0 };
 
@@ -45,5 +45,37 @@ describe("fovForAspect", () => {
 
   it("never exceeds a sensible maximum", () => {
     assert.ok(fovForAspect(0.1) <= 80);
+  });
+
+  it("caps portrait phones at 70 degrees to avoid fisheye stretch", () => {
+    assert.equal(fovForAspect(0.46), 70);
+    assert.ok(fovForAspect(0.75) <= 70);
+  });
+});
+
+describe("basePoseForAspect", () => {
+  it("keeps the authored pose on landscape screens", () => {
+    assert.deepEqual(basePoseForAspect(1.78), {
+      position: [...CAMERA_BASE.position],
+      target: [...CAMERA_BASE.target],
+    });
+  });
+
+  it("pulls back and up on a tall phone so the meadow is not cropped", () => {
+    const pose = basePoseForAspect(0.46);
+    assert.ok(pose.position[2] > CAMERA_BASE.position[2] + 3, `z ${pose.position[2]}`);
+    assert.ok(pose.position[1] > CAMERA_BASE.position[1], `y ${pose.position[1]}`);
+  });
+
+  it("eases between the two on a tablet in portrait", () => {
+    const tablet = basePoseForAspect(0.75);
+    const phone = basePoseForAspect(0.46);
+    assert.ok(tablet.position[2] > CAMERA_BASE.position[2]);
+    assert.ok(tablet.position[2] < phone.position[2]);
+  });
+
+  it("feeds cameraPoseAt so parallax builds on the portrait pose", () => {
+    const pose = cameraPoseAt(0, { x: 0, y: 0 }, { reducedMotion: true, aspect: 0.46 });
+    assert.deepEqual(pose.position, basePoseForAspect(0.46).position);
   });
 });

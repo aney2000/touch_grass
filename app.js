@@ -140,6 +140,7 @@ function frame(now = 0) {
     camera,
     cameraPoseAt(snapshot.seconds, snapshot.pointer, {
       reducedMotion: model.prefersReducedMotion,
+      aspect: camera.aspect,
     }),
   );
   world.update(snapshot);
