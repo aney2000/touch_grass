@@ -8,7 +8,7 @@ const TIERS = ["low", "mid", "high"];
 const SETTINGS = {
   low: {
     grassBlades: 18000,
-    groveTrees: 14,
+    groveTrees: 24,
     fallingCapacity: 220,
     maxDpr: 1.25,
     msaa: 0,
@@ -16,7 +16,7 @@ const SETTINGS = {
   },
   mid: {
     grassBlades: 36000,
-    groveTrees: 18,
+    groveTrees: 36,
     fallingCapacity: 400,
     maxDpr: 1.5,
     msaa: 2,
@@ -24,7 +24,7 @@ const SETTINGS = {
   },
   high: {
     grassBlades: 60000,
-    groveTrees: 22,
+    groveTrees: 48,
     fallingCapacity: 600,
     maxDpr: 2,
     msaa: 4,
