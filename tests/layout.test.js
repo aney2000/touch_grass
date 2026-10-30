@@ -306,6 +306,26 @@ describe("hosting badge clearance", () => {
   });
 });
 
+describe("favicon and share meta", () => {
+  it("links an SVG favicon by a relative path that works from any upload folder", () => {
+    assert.match(html, /<link rel="icon" href="favicon\.svg" type="image\/svg\+xml"/);
+    const svg = readFileSync(new URL("../public/favicon.svg", import.meta.url), "utf8");
+    assert.match(svg, /<svg[^>]*xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
+  });
+
+  it("describes the page for link previews", () => {
+    assert.match(html, /<meta\s+property="og:title"\s+content="[^"]+"/);
+    assert.match(html, /<meta\s+property="og:description"\s+content="[^"]+"/);
+    assert.match(html, /<meta property="og:type" content="website"/);
+    assert.match(html, /<meta name="twitter:card" content="summary"/);
+  });
+
+  it("builds with a relative base so dist/ can be uploaded into any path", () => {
+    const vite = readFileSync(new URL("../vite.config.js", import.meta.url), "utf8");
+    assert.match(vite, /base:\s*"\.\/"/);
+  });
+});
+
 function mediaBlock(query) {
   const start = css.indexOf(`@media ${query}`);
   assert.ok(start >= 0, `expected @media ${query}`);
