@@ -3,217 +3,223 @@
 A quiet little field to visit whenever you need a moment outside.
 
 Stillfield is a single-page three.js scene: a sunlit, rolling hill under a
-cobalt sky — an homage to the classic "Bliss" desktop — that you can actually
-touch. Rest your cursor on the grass to part it, swipe to send ripples through
-the meadow, and let night fall to watch the moon rise, stars and meteors
+cobalt sky (an homage to the classic "Bliss" desktop) that you can actually
+touch. Brush the grass to part it, swipe to send ripples through the meadow,
+change the season, and let night fall to watch the moon rise, stars and meteors
 appear, and fireflies blink to life.
 
 ## Features
 
-- **Real-time 3D meadow** — tens of thousands of GPU-instanced grass blades
-  swaying in rolling wind waves, a Bliss-style hill, a lone swaying tree, and
-  billowy cumulus clouds streaming across the sky.
-- **Day / night transition** — the same eased tween and live clock as before,
-  now driving a sunset sky dome, moving sun and moon lights, fog, bloom, and
-  exposure from a single `dayAmount`.
-- **Touch the grass** — the pointer is ray-cast onto the terrain: grass parts
+- **Real-time 3D meadow**: tens of thousands of GPU-instanced grass blades in
+  rolling wind waves, a Bliss-style hill and billowy cumulus clouds.
+- **Touch the grass**: the pointer is ray-cast onto the terrain; grass parts
   under your hand, and brisk swipes or taps send expanding ripple rings.
-- **Real fireflies** — each one wanders in 3D and flashes like the real thing
-  (a short pulse, then darkness); bloom makes them glow and they light the
-  grass blades around them.
-- **Living camera** — a slow breathing drift plus gentle parallax toward the
-  pointer; the field of view widens on portrait screens.
-- **Respects `prefers-reduced-motion`** — wind, clouds, fireflies, and the
-  camera calm down, meteors stay away, and the transition is quicker.
-- **Spot the constellations** — the night sky looks like the real one: no
-  text and no lines, just the Big Dipper (with Alcor beside Mizar), Little
-  Dipper (with Polaris), Cassiopeia and Orion (with Meissa, the sword and the
-  soft glow of the Orion Nebula), placed from real star coordinates at their
-  true relative sizes so the Merak → Dubhe pointer leads to the pole star.
-  Brightness follows apparent magnitude, colour follows each star's B−V index
-  (orange Betelgeuse, blue-white Rigel), and stars twinkle more near the
-  horizon. Press <kbd>C</kbd> to fade in a faint star-chart tracing, or tap a
-  figure at night to trace it for a few seconds while its stars gently glow;
-  screen readers announce its name.
-- **Forest** — a small forest of 24/36/48 trees (by quality tier) in a few
-  copses and a forest edge, planted only where the resting camera sees them
-  (in view, not behind the hills), with the centre meadow kept clear. About a
-  quarter are conifers that stay green and gather snow; deciduous trees and
-  the hero tree blossom, green, turn and go bare with the seasons
-  (`src/forest.js`). `grove.canopies` lists canopy positions for particles and
-  birds.
-- **Season changes** — a 7 s choreographed morph (1.2 s with reduced
-  motion) instead of a crossfade, opened by a soft breeze. Each channel (sky,
-  light, ground snow, grass snow, grass colour and height, foliage colour and
-  density, blossom, particles) eases in its own window
+- **Day / night**: one eased `dayAmount` drives the sky dome, sun and moon
+  lights, fog, bloom, exposure and a live clock (noon at midday, midnight at
+  the depth of night).
+- **Forest**: 24 / 36 / 48 trees (by quality tier) in a few copses and a
+  forest edge, planted only where the resting camera sees them, with the
+  centre meadow kept clear. About a quarter are conifers that stay green and
+  gather snow; deciduous trees blossom, green, turn and go bare
+  (`src/forest.js`).
+- **Season choreography**: a 7 s morph (1.2 s with reduced motion), opened by
+  a soft breeze. Each channel (sky, light, ground snow, grass snow, grass colour
+  and height, foliage, blossom, particles) eases in its own window
   (`src/season-choreography.js`): into winter the leaves turn, then fall, the
   sky cools, snow settles on the blade tips before the ground and the grass
-  shortens last; into spring the ground melts, then the tips, the grass greens
-  and grows and blossoms open last. Going backwards plays the film in reverse,
-  and a two-season jump walks through the season in between. Like day/night,
-  the sky, sun and haze move too: soft fresh spring, the classic summer sky,
-  golden hazy autumn, pale cold winter with a lower, weaker sun.
-- **Falling particles** — none in summer. In spring and autumn each deciduous
-  tree (conifers don't shed) drops petals or leaves from its own canopy at
-  about one per second; they drift within ~2.5 canopy radii of their tree,
-  settle on the ground and shrink away after ~1.5 s (`src/emitters.js`
-  strategies, `src/falling.js`). Leaves grow with camera distance so they stay
-  readable 40–125 m away. Winter snow is sparse, small and soft, spread over
-  the whole visible meadow and forest. `src/particle-budget.js` caps alive
-  particles: ~8 leaves per deciduous tree (≤ 120 / 200 / 300 by tier) and
-  250 / 400 / 600 flakes.
-- **Graceful fallback** — without WebGL, a CSS rendition of the field remains.
-
-## Life in the meadow
-
-- **Birds** — every 6–18 s by day a flock of 1–5 small birds leaves a canopy
-  and flies a smooth Bézier arc to another tree, out of view (past the sides
-  or up into the sky), or in from beyond the view to land in a tree. Perched
-  birds are hidden inside their canopy. Flights thin out through dusk, stop at
-  night and are about three times rarer in winter. Each bird flaps at 6–9 Hz
-  with short glides and banks into turns; followers trail the leader in a loose
-  echelon. Reduced motion slows the flight. At most 4 / 6 / 8 birds by tier
-  (`src/birds.js`, `src/three/birds.js`); like leaves, the dark silhouettes grow
-  with camera distance (`src/three/screen-size.js`) and fade into the haze.
-- **Grasshoppers** — in summer, sweeping the hand through the grass sometimes
-  flushes 1–3 grasshoppers nearby. Each makes a ballistic hop away from the
-  hand with a brief orange wing flash, maybe one or two smaller hops, then
-  vanishes into the grass. Mostly by day, rarer at dusk and in spring/autumn,
-  never at night or in winter, with a cooldown between flushes. At most
-  4 / 6 / 8 by tier (`src/grasshoppers.js`, `src/three/grasshoppers.js`).
+  shortens last. Backwards plays in reverse; a two-season jump walks through the
+  season in between.
+- **Zonal falling particles**: none in summer. In spring and autumn each
+  deciduous tree drops petals or leaves from its own canopy (about one per
+  second) that drift within ~2.5 canopy radii, settle and shrink away. Winter
+  snow is sparse and soft over the whole visible field. The budget scales with
+  the forest: ~8 leaves per deciduous tree (≤ 120 / 200 / 300 by tier) and
+  250 / 400 / 600 flakes (`src/particle-budget.js`).
+- **Birds**: by day a flock of 1–5 birds leaves a canopy every 6–18 s and
+  flies a Bézier arc to another tree, out of view, or in to land. Rarer at dusk
+  and in winter, none at night; at most 4 / 6 / 8 by tier.
+- **Grasshoppers**: in summer, sweeping through the grass sometimes flushes
+  1–3 grasshoppers that hop away with an orange wing flash. Never at night or
+  in winter; at most 4 / 6 / 8 by tier.
+- **Label-free constellations**: the Big Dipper, Little Dipper, Cassiopeia
+  and Orion from real star coordinates, with brightness by magnitude, colour by
+  B−V index and twinkle near the horizon. No text on the sky: <kbd>C</kbd>
+  fades in a faint tracing, and tapping a figure traces it briefly while a
+  quiet caption by the clock (and a screen-reader announcement) names it.
+- **Zen**: hides all text and controls for one minute with a small countdown.
+- **Fireflies, meteors, living camera**: fireflies flash like the real thing
+  and light the grass; meteors cross the night sky; the camera breathes and
+  leans toward the pointer.
+- **Graceful fallback**: without WebGL or JavaScript, a CSS rendition of the
+  field remains.
 
 ## Controls
 
-The controls sit in a dock at the bottom-left, next to the clock, clear of the
-hosting badge in the bottom-right corner.
+The dock sits at the bottom-left beside the clock.
 
-| Control        | Shortcut                      | What it does                                                          |
-| -------------- | ----------------------------- | --------------------------------------------------------------------- |
-| Brush / swipe  | —                             | Parts the grass under the pointer; brisk swipes and taps send ripples |
-| Day / night    | <kbd>N</kbd>                  | Lets night fall or morning in                                         |
-| Seasons        | <kbd>1</kbd>–<kbd>4</kbd>     | Morphs the meadow to spring, summer, autumn or winter                 |
-| Constellations | <kbd>C</kbd>                  | Traces the constellations, no labels (lets night fall first by day)   |
-| Zen            | <kbd>Z</kbd>                  | Hides all text and controls for one minute, with a small countdown    |
-| Leave zen      | <kbd>Esc</kbd> / <kbd>Z</kbd> | Brings everything back early (or click the countdown)                 |
+| Control        | Shortcut                       | What it does                                                         |
+| -------------- | ------------------------------ | -------------------------------------------------------------------- |
+| Brush / swipe  | —                              | Parts the grass; brisk swipes and taps send ripples                  |
+| Day / night    | <kbd>N</kbd>                   | Lets night fall or morning in                                        |
+| Seasons        | <kbd>1</kbd>–<kbd>4</kbd>      | Spring, summer, autumn, winter                                       |
+| Season group   | <kbd>←</kbd> <kbd>→</kbd> etc. | Radio group with one tab stop; arrow keys move and select the season |
+| Constellations | <kbd>C</kbd>                   | Traces the constellations (lets night fall first by day)             |
+| Zen            | <kbd>Z</kbd>                   | Hides everything for one minute                                      |
+| Leave zen      | <kbd>Esc</kbd> / <kbd>Z</kbd>  | Brings everything back early (or click the countdown)                |
+| Shortcuts      | —                              | Switches the single-key shortcuts off and on (hidden on touch)       |
 
-Shortcuts ignore modifier keys and keystrokes typed into fields. The clock
-follows the sky: noon at midday, midnight at the depth of night, running
-forward through the evening as night falls and through the morning as day
-returns.
+Shortcuts ignore modifier keys and keystrokes typed into fields.
 
 ## Performance & devices
 
-- **Quality tiers** (`src/quality.js`): at startup the screen size, pixel
-  ratio, CPU cores, device memory, pointer type and reduced-motion preference
-  pick a `low`, `mid` or `high` tier. The tier sets grass blades
-  (18k / 36k / 60k), grove trees, the falling-particle budget, pixel ratio cap
-  (1.25 / 1.5 / 2), MSAA samples (0 / 2 / 4) and bloom resolution. Effective
-  pixels are clamped to about 8 MP; unknown hardware counts as mid-capable,
-  and reduced motion drops one tier.
+- **Quality tiers** (`src/quality.js`): screen size, pixel ratio, CPU cores,
+  device memory, pointer type and reduced motion pick `low`, `mid` or `high`.
+  The tier sets grass blades (18k / 36k / 60k), trees, particle, bird and
+  grasshopper caps, pixel-ratio cap (1.25 / 1.5 / 2), MSAA (0 / 2 / 4) and
+  bloom resolution. Effective pixels are clamped to ~8 MP.
 - **Frame governor** (`src/frame-governor.js`): if smoothed frame time stays
-  over 22 ms for 3 s, the app steps down a tier live (pixel ratio and bloom
-  scale only; geometry is not rebuilt), then waits 8 s before judging again.
-- **Idle cost**: rendering pauses while the tab is hidden; resizes are
-  coalesced into one frame and skipped when nothing changed; per-frame DOM
-  writes happen only on change.
-- **Touch & small screens**: drags on the canvas brush the grass (no scroll or
-  pull-to-refresh), safe-area insets apply under notches, tap targets are at
-  least 44 px, hover effects are limited to hover-capable pointers, and
-  portrait screens get a capped 70° field of view with the camera pulled back.
-  Layouts cover phones, tablets (601–1024 px), short landscape phones and
-  large (≥1920 px) screens.
+  over 22 ms for 3 s, it steps down a tier live (pixel ratio and bloom only),
+  then waits 8 s before judging again.
+- **Idle cost** (`src/loop.js`): rendering pauses while the tab is hidden,
+  resizes are coalesced, WebGL context loss is handled, and the frame loop
+  rebuilds season and atmosphere data only when their inputs move.
+- **Distance-aware sprites** (`src/three/screen-size.js`): leaves and birds
+  grow with camera distance so they stay readable far away.
+- **Small screens**: drags brush the grass (no scroll or pull-to-refresh),
+  safe-area insets apply, portrait gets a capped 70° field of view, and layouts
+  cover phones, tablets (601–1024 px), short landscape phones and ≥1920 px.
 
-## Getting started
+## Accessibility
 
-```bash
-npm install
-npm run dev       # http://localhost:5173
-npm run build     # production bundle in dist/
-npm run preview   # serve the production bundle
-```
+- **Contrast**: overlay text and dock colours are checked against WCAG ratios
+  in tests (`src/contrast.js`, `tests/contrast.test.js`), day and night.
+- **Keyboard**: every control is a real button; seasons are a radio group with
+  roving focus; single-key shortcuts can be turned off (WCAG 2.1.4).
+- **Screen readers**: the canvas is a labelled image, an intro explains the
+  controls, and day/night, season, zen and constellation changes are announced
+  in polite live regions.
+- **Touch**: dock buttons are 44 px squares on phones; the zen countdown has a
+  44 px target; hover effects only apply to hover-capable pointers.
+- **`prefers-reduced-motion`**: a static camera (no drift or parallax), no
+  season-change breeze gust, slower wind, clouds, fireflies, particles and
+  birds, no meteors, shorter day/night and season transitions, and one lower
+  quality tier.
 
-> Working from WSL on a Windows drive (`/mnt/c/...`)? File watching does not
-> see edits there; start the dev server with `CHOKIDAR_USEPOLLING=1 npm run dev`.
+## Architecture
 
-## Quality gates
+- **Pure model → snapshot → systems.** Pure modules (`src/*.js`) hold all
+  the maths and know nothing of the DOM or WebGL, so they are unit-tested in
+  plain Node. `Scene` (`src/scene.js`) owns mutable state and publishes one
+  read-only `frame()` snapshot per frame. The world (`src/three/world.js`) is an
+  ordered list of systems, each owning one three.js object and an
+  `update(frame)`; adding scenery means registering a system, not editing the
+  loop. The stage (`src/three/stage.js`) is the only WebGL boundary.
+- **Strategy spawners.** Falling particles take a spawner strategy per kind
+  (`src/emitters.js`): canopy emitters for petals and leaves, a sky-area
+  spawner for snow. Zonal behaviour and the forest-relative budget come from
+  the strategy, not from branches in the particle system.
+- **Quality tiers** set every expensive count once at startup; the governor
+  only touches cheap knobs at runtime, so nothing is rebuilt mid-session.
+- **Thin composition root.** `app.js` wires DOM bindings (`src/ui/*`), model,
+  world and input, and runs the loop.
 
-```bash
-npm test             # Node's built-in test runner
-npm run lint         # ESLint
-npm run format:check # Prettier
-npm run verify       # all of the above
-```
-
-Scene logic is test-driven. The pure models need no browser, and the three.js
-systems are tested headlessly against three's core (no WebGL required) — only
-the WebGL stage and the composition root are left to manual checks.
+The Bliss look is procedural; no copyrighted imagery is bundled.
 
 ## Project structure
 
 ```
-index.html            Markup and the canvas element
-styles.css            Layout, controls, theming, and the static fallback
-app.js                Composition root: wires DOM, model, world, and input
-vite.config.js        Build config (three.js in its own vendor chunk)
+index.html              Markup, canvas, share meta
+styles.css              Layout, dock, theming, static fallback
+app.js                  Composition root
+public/favicon.svg      Copied to the dist/ root by Vite
+vite.config.js          Relative base, three.js in its own chunk
 src/
-  config.js           Palettes and tuning constants (single source of truth)
-  scene-math.js       Pure maths: colour mixing, easing, shooting stars
-  time.js             Clock formatting and the day/night tween
-  atmosphere.js       dayAmount -> every sky colour, light, and visibility
-  terrain.js          Height field, crest finding, and ground picking
-  wind.js             Ripple gusts and the hand that parts the grass
-  fireflies.js        3D firefly flight and flash pattern
-  clouds.js           Cumulus cloud generation and drift
-  camera-rig.js       Camera drift, parallax, and portrait FOV
-  scene.js            Scene model: state, lifecycle, per-frame snapshot
-  input.js            Pointer controller: parallax, touch, and gusts
-  zen.js              Zen mode timer and countdown formatting
-  seasons.js          Season ring, blend weights, and blended season looks
-  season-choreography.js  Per-channel timing and easing of a season morph
+  config.js             Palettes and tuning constants
+  scene-math.js         Colour mixing, easing, random, shooting stars
+  time.js               Clock formatting and the day/night tween
+  atmosphere.js         dayAmount + season look -> sky, light, visibility
+  terrain.js            Height field and ground picking
+  ground.js             Ground colour and snow cover
+  wind.js               Ripple gusts and the hand that parts the grass
+  fireflies.js          Firefly flight and flash pattern
+  clouds.js             Cumulus generation and drift
+  camera-rig.js         Drift, parallax, portrait FOV
+  scene.js              Scene model and per-frame snapshot
+  input.js              Pointer controller
+  seasons.js            Season ring, blend weights, season looks
+  season-choreography.js  Per-channel timing of a season morph
+  forest.js             Tree placement in copses and the forest edge
+  emitters.js           Spawner strategies (canopy, sky)
+  falling.js            Petal, leaf and snow particle field
+  particle-budget.js    Particle caps from forest size and tier
+  birds.js              Flock flights between canopies
+  grasshoppers.js       Grasshopper flushes and hops
+  constellations.js     Star catalogue, magnitudes, colours, layout
+  zen.js                Zen timer and countdown
+  quality.js            Quality tiers and stage options
+  frame-governor.js     Live tier step-down
+  loop.js               Render loop, visibility, context loss
+  contrast.js           WCAG luminance and contrast ratio
   ui/
-    shortcuts.js      Single-key shortcuts that ignore modifiers and typing
-    clock-view.js     Renders the clock as text
-    day-night-toggle.js  Day/night button and N shortcut
-    zen-mode.js       Zen button, countdown pill, and Z / Escape shortcuts
-    season-picker.js  Season buttons and the 1-4 shortcuts
+    shortcuts.js        Shortcut matching and the on/off gate + toggle
+    clock-view.js       Clock text
+    day-night-toggle.js Day/night button, N, status announcements
+    season-picker.js    Season radio group, 1–4 and arrow keys
+    constellation-toggle.js  C toggle, caption, announcements
+    zen-mode.js         Zen button, countdown, Z / Escape
+    hint.js             Hint that dismisses itself
+    script-ready.js     Clears the no-js class
   three/
-    world.js          Ordered pipeline of scene systems
-    stage.js          WebGL renderer, bloom, and tone mapping
-    camera.js         Camera pose, resize, and ground picker
-    sky.js            Sky dome (sun, moon, twilight) and stars
-    lights.js         Sun, moon, and hemisphere lights
-    clouds.js         Billboard-puff cumulus clouds
-    meteors.js        Night meteor shower
-    terrain.js        Bliss hill mesh
-    tree.js           The lone tree
-    grass.js          Instanced grass shader (wind, gusts, firefly light)
-    fireflies.js      Bloom-ready firefly glow
+    world.js            Ordered pipeline of systems
+    stage.js            Renderer, bloom, tone mapping
+    camera.js           Camera pose, resize, ground picker
+    sky.js              Sky dome, sun, moon, stars
+    lights.js           Sun, moon, hemisphere lights
+    clouds.js           Billboard cumulus
+    meteors.js          Night meteors
+    terrain.js          Hill mesh
+    tree.js             Grove of deciduous trees and conifers
+    grass.js            Instanced grass shader
+    fireflies.js        Firefly glow
+    falling.js          Falling-particle points
+    birds.js            Bird silhouettes
+    grasshoppers.js     Grasshopper sprites
+    constellations.js   Star figures, tracing, sky picker
+    color.js            Colour helpers
+    screen-size.js      Distance-aware sprite sizing (GLSL)
 tests/
-  *.test.js           Pure model tests
-  three/*.test.js     Headless tests for the three.js systems
-  ui/*.test.js        DOM bindings, tested with tiny element fakes
+  *.test.js             Pure model tests
+  three/*.test.js       Headless tests for three.js systems
+  ui/*.test.js          DOM bindings with tiny element fakes
+  layout.test.js        index.html / styles.css / vite.config.js as text
 ```
 
-## How it works
+## Development
 
-The code is split along clear responsibilities:
+```bash
+npm install
+npm run dev          # http://localhost:5173
+npm test             # Node's built-in test runner
+npm run lint         # ESLint
+npm run format:check # Prettier
+npm run verify       # all three
+```
 
-- **Pure models** ([src/atmosphere.js](src/atmosphere.js),
-  [src/terrain.js](src/terrain.js), [src/wind.js](src/wind.js), ...) hold all
-  the maths and know nothing about the DOM or WebGL.
-- **`Scene`** ([src/scene.js](src/scene.js)) owns mutable state and the
-  per-frame lifecycle, and publishes one read-only `frame()` snapshot: time,
-  atmosphere, wind, fireflies, and pointer.
-- **The world** ([src/three/world.js](src/three/world.js)) is an ordered list
-  of systems. Each owns one three.js object and an `update(frame)`, so adding
-  scenery means registering a system, not editing the loop.
-- **The stage** ([src/three/stage.js](src/three/stage.js)) is the only WebGL
-  boundary: it renders through bloom and tone mapping.
-- **`app.js`** is a thin composition root that owns the DOM and runs the
-  `requestAnimationFrame` loop.
+Scene logic is test-driven: pure models need no browser, three.js systems are
+tested headlessly against three's core, and only the WebGL stage and the
+composition root are left to manual checks on real devices.
 
-The day/night toggle sets a target and the model eases `dayAmount` toward it;
-[`atmosphereAt(dayAmount)`](src/atmosphere.js) turns that single number into
-every colour, light, and glow on screen.
+> **WSL on a Windows drive (`/mnt/c/...`)**: Node there intermittently
+> misreads large files in `node_modules`. Run tests, lint and builds from a
+> copy on the Linux filesystem (e.g. `rsync` to `/tmp`, then `npm ci` there).
+> File watching also misses edits on `/mnt/c`; use
+> `CHOKIDAR_USEPOLLING=1 npm run dev`.
 
-The Bliss look is recreated procedurally — no copyrighted imagery is bundled.
+## Deployment
+
+```bash
+npm run build        # writes dist/
+```
+
+Upload the contents of `dist/` to any static host. `base: "./"` makes every
+asset URL relative, so the folder works from a domain root or a subfolder.
