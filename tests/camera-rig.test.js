@@ -22,13 +22,23 @@ describe("cameraPoseAt", () => {
   });
 
   it("leans toward the pointer for parallax", () => {
-    const left = cameraPoseAt(0, { x: -1, y: 0 }, { reducedMotion: true });
-    const right = cameraPoseAt(0, { x: 1, y: 0 }, { reducedMotion: true });
+    const left = cameraPoseAt(0, { x: -1, y: 0 });
+    const right = cameraPoseAt(0, { x: 1, y: 0 });
     assert.ok(right.position[0] > left.position[0]);
   });
 
+  it("holds a static pose under reduced motion: no parallax, no sway", () => {
+    const rest = cameraPoseAt(0, still, { reducedMotion: true });
+    for (const [t, pointer] of [
+      [5, { x: 1, y: -1 }],
+      [42, { x: -1, y: 1 }],
+    ]) {
+      assert.deepEqual(cameraPoseAt(t, pointer, { reducedMotion: true }), rest);
+    }
+  });
+
   it("bounds the parallax even for out-of-range pointers", () => {
-    const pose = cameraPoseAt(0, { x: 50, y: -50 }, { reducedMotion: true });
+    const pose = cameraPoseAt(0, { x: 50, y: -50 });
     assert.ok(Math.abs(pose.position[0] - CAMERA_BASE.position[0]) <= 1.2);
     assert.ok(Math.abs(pose.position[1] - CAMERA_BASE.position[1]) <= 0.6);
   });

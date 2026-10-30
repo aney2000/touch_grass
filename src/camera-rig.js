@@ -38,9 +38,11 @@ export function basePoseForAspect(aspect = 16 / 9) {
 }
 
 export function cameraPoseAt(seconds, pointer, { reducedMotion = false, aspect } = {}) {
-  const px = clamp(pointer.x, -1, 1);
-  const py = clamp(pointer.y, -1, 1);
-  const drift = reducedMotion ? 0 : 1;
+  // Under reduced motion the view is a fixed photograph: no sway, no parallax.
+  const motion = reducedMotion ? 0 : 1;
+  const px = clamp(pointer.x, -1, 1) * motion;
+  const py = clamp(pointer.y, -1, 1) * motion;
+  const drift = motion;
   const base = basePoseForAspect(aspect);
   const [x, y, z] = base.position;
   const [tx, ty, tz] = base.target;
