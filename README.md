@@ -36,6 +36,7 @@ hosting badge in the bottom-right corner.
 | ------------- | ----------------------------- | --------------------------------------------------------------------- |
 | Brush / swipe | —                             | Parts the grass under the pointer; brisk swipes and taps send ripples |
 | Day / night   | <kbd>N</kbd>                  | Lets night fall or morning in                                         |
+| Seasons       | <kbd>1</kbd>–<kbd>4</kbd>     | Morphs the meadow to spring, summer, autumn or winter                 |
 | Zen           | <kbd>Z</kbd>                  | Hides all text and controls for one minute, with a small countdown    |
 | Leave zen     | <kbd>Esc</kbd> / <kbd>Z</kbd> | Brings everything back early (or click the countdown)                 |
 
@@ -89,11 +90,13 @@ src/
   scene.js            Scene model: state, lifecycle, per-frame snapshot
   input.js            Pointer controller: parallax, touch, and gusts
   zen.js              Zen mode timer and countdown formatting
+  seasons.js          Season ring, blend weights, and blended season looks
   ui/
     shortcuts.js      Single-key shortcuts that ignore modifiers and typing
     clock-view.js     Renders the clock as text
     day-night-toggle.js  Day/night button and N shortcut
     zen-mode.js       Zen button, countdown pill, and Z / Escape shortcuts
+    season-picker.js  Season buttons and the 1-4 shortcuts
   three/
     world.js          Ordered pipeline of scene systems
     stage.js          WebGL renderer, bloom, and tone mapping
