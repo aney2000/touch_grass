@@ -47,7 +47,7 @@ function settingsFor(tier, dpr, pixelCap) {
     groveTrees: s.groveTrees,
     pixelRatio: Math.min(dpr, s.maxDpr, pixelCap),
     msaa: s.msaa,
-    bloom: { enabled: true, scale: s.bloomScale },
+    bloom: { scale: s.bloomScale },
     dpr,
     pixelCap,
   };

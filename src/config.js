@@ -110,8 +110,6 @@ export const SCENE_SEED = 741;
 
 export const COUNTS = {
   fireflies: 48,
-  grassBlades: 60000,
-  grassBladesCompact: 24000,
   clouds: 14,
 };
 
