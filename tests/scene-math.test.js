@@ -1,6 +1,25 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { clamp, randomGenerator, hexToRgb, mixHex, mixRgb, smoothstep } from "../src/scene-math.js";
+import {
+  clamp,
+  randomGenerator,
+  hexToRgb,
+  hexToUnitRgb,
+  mixHex,
+  mixRgb,
+  smoothstep,
+  unitRgbToHex,
+} from "../src/scene-math.js";
+
+describe("unitRgbToHex", () => {
+  it("round-trips a hex colour through unit RGB", () => {
+    assert.equal(unitRgbToHex(hexToUnitRgb("#1d5fd1")), "#1d5fd1");
+  });
+
+  it("rounds and clamps out-of-range channels", () => {
+    assert.equal(unitRgbToHex([1.2, -0.1, 0.5]), "#ff0080");
+  });
+});
 
 describe("clamp", () => {
   it("returns the value when it is inside the range", () => {

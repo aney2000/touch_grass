@@ -21,6 +21,14 @@ export function hexToUnitRgb(hex) {
   return hexToRgb(hex).map((channel) => channel / 255);
 }
 
+export function unitRgbToHex(rgb) {
+  const byte = (value) =>
+    Math.round(clamp(value, 0, 1) * 255)
+      .toString(16)
+      .padStart(2, "0");
+  return `#${rgb.map(byte).join("")}`;
+}
+
 // Endpoint-exact lerp form, so amount 0 or 1 yields the input colour bit-for-bit.
 export function mixRgb(first, second, amount) {
   return first.map((value, index) => value * (1 - amount) + second[index] * amount);

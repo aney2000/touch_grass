@@ -6,8 +6,8 @@ import { Scene } from "./src/scene.js";
 import { createPointerInput, toNdc } from "./src/input.js";
 import { createRenderLoop, bindContextLoss } from "./src/loop.js";
 import { cameraPoseAt } from "./src/camera-rig.js";
-import { mixHex } from "./src/scene-math.js";
-import { COUNTS, dayPalette, nightPalette } from "./src/config.js";
+import { unitRgbToHex } from "./src/scene-math.js";
+import { COUNTS } from "./src/config.js";
 import { createWorld } from "./src/three/world.js";
 import { createStage } from "./src/three/stage.js";
 import {
@@ -165,9 +165,10 @@ function lowerQuality() {
   resize();
 }
 
+// The browser chrome follows the sky actually drawn, seasons included.
 let lastThemeColor = "";
-function updateThemeColor() {
-  const color = mixHex(dayPalette.skyTop, nightPalette.skyTop, model.dayAmount);
+function updateThemeColor(atmosphere) {
+  const color = unitRgbToHex(atmosphere.skyTop);
   if (color === lastThemeColor) return;
   lastThemeColor = color;
   themeColor.setAttribute("content", color);
@@ -189,7 +190,7 @@ function frame(now) {
   );
   world.update(snapshot);
   stage?.render(snapshot.atmosphere);
-  updateThemeColor();
+  updateThemeColor(snapshot.atmosphere);
   clockView.render(model.clock());
   zenMode.update(now);
   constellationToggle.sync();
