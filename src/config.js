@@ -39,18 +39,25 @@ export const SEASONS = Object.freeze(["spring", "summer", "autumn", "winter"]);
 export const SEASON_MS = 7000;
 export const REDUCED_MOTION_SEASON_MS = 1200;
 
-const freezeLook = ({ foliage, particleRates, ...rest }) =>
+const freezeLook = ({ foliage, particleRates, sky, light, ...rest }) =>
   Object.freeze({
     ...rest,
     foliage: Object.freeze(foliage),
     particleRates: Object.freeze(particleRates),
+    sky: Object.freeze(sky),
+    light: Object.freeze(light),
   });
 
 // What each season looks like at midday. Colours are hex; seasonLook() blends
 // them into unit RGB. `particles` names the season's dominant falling particle,
 // while `particleRates` (0..1 per kind) lets two kinds crossfade during a morph.
+// `sky` tints the sky (top and horizon, by `amount`) and scales the fog
+// distances; `light` tints and scales the sun and lowers its arc. Summer is the
+// neutral season (no tint, scale 1, no offset) so it keeps the classic sky.
 export const SEASON_LOOKS = Object.freeze({
   spring: freezeLook({
+    sky: { top: "#5d9be6", horizon: "#d4ecf4", amount: 0.25, fogScale: 0.95 },
+    light: { sunTint: "#fff6ea", sunStrength: 0.95, sunElevationOffset: -0.05 },
     grassHeight: 0.85,
     grassBase: "#4f9a2e",
     grassTip: "#a6dc5a",
@@ -61,6 +68,8 @@ export const SEASON_LOOKS = Object.freeze({
     particleRates: { petals: 0.6, leaves: 0, snow: 0 },
   }),
   summer: freezeLook({
+    sky: { top: "#1d5fd1", horizon: "#b8d9f6", amount: 0, fogScale: 1 },
+    light: { sunTint: "#ffffff", sunStrength: 1, sunElevationOffset: 0 },
     grassHeight: 1.15,
     grassBase: "#3c8420",
     grassTip: "#7cc23a",
@@ -71,6 +80,8 @@ export const SEASON_LOOKS = Object.freeze({
     particleRates: { petals: 0, leaves: 0, snow: 0 },
   }),
   autumn: freezeLook({
+    sky: { top: "#5a86c8", horizon: "#f0d09a", amount: 0.35, fogScale: 0.75 },
+    light: { sunTint: "#ffd8a0", sunStrength: 0.9, sunElevationOffset: -0.15 },
     grassHeight: 0.95,
     grassBase: "#8a7a34",
     grassTip: "#d4b25a",
@@ -81,6 +92,8 @@ export const SEASON_LOOKS = Object.freeze({
     particleRates: { petals: 0, leaves: 0.7, snow: 0 },
   }),
   winter: freezeLook({
+    sky: { top: "#9fb8d8", horizon: "#9fbce6", amount: 0.5, fogScale: 0.7 },
+    light: { sunTint: "#dce8ff", sunStrength: 0.75, sunElevationOffset: -0.35 },
     grassHeight: 0.25,
     grassBase: "#7f9488",
     grassTip: "#c9d6cf",

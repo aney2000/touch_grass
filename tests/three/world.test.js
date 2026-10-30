@@ -49,6 +49,13 @@ describe("createWorld", () => {
     assert.ok(world.scene.fog.color.equals(expected));
   });
 
+  it("pulls the fog in to the atmosphere's seasonal haze distances", () => {
+    const world = createWorld([]);
+    world.update({ seconds: 0, atmosphere: { ...atmosphereAt(0), fogNear: 30, fogFar: 200 } });
+    assert.equal(world.scene.fog.near, 30);
+    assert.equal(world.scene.fog.far, 200);
+  });
+
   it("tolerates systems without update or dispose hooks", () => {
     const world = createWorld([{ object: new THREE.Group() }]);
     world.update({ seconds: 0, atmosphere: atmosphereAt(0) });

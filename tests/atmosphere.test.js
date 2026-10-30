@@ -3,6 +3,56 @@ import assert from "node:assert/strict";
 import { atmosphereAt } from "../src/atmosphere.js";
 import { hexToUnitRgb } from "../src/scene-math.js";
 import { dayPalette, nightPalette } from "../src/config.js";
+import { seasonBlendAt, seasonLook } from "../src/seasons.js";
+
+const lookOf = (position) => seasonLook(seasonBlendAt(position));
+const withoutGrass = ({ grassTip, grassBase, ...rest }) => (grassTip && grassBase ? rest : rest);
+const warmth = ([r, , b]) => r - b;
+
+describe("atmosphereAt with seasonal sky and light", () => {
+  it("reproduces the classic atmosphere exactly in summer, at any time of day", () => {
+    for (const amount of [0, 0.3, 0.6, 1]) {
+      assert.deepEqual(
+        withoutGrass(atmosphereAt(amount, lookOf(1))),
+        withoutGrass(atmosphereAt(amount)),
+      );
+    }
+  });
+
+  it("publishes fog distances, the classic ones without a season", () => {
+    assert.equal(atmosphereAt(0).fogNear, 45);
+    assert.equal(atmosphereAt(0).fogFar, 320);
+  });
+
+  it("makes winter paler and colder, with a lower, weaker, cooler sun and closer haze", () => {
+    const summer = atmosphereAt(0, lookOf(1));
+    const winter = atmosphereAt(0, lookOf(3));
+    assert.ok(warmth(winter.skyHorizon) < warmth(summer.skyHorizon));
+    assert.ok(warmth(winter.sunColor) < warmth(summer.sunColor));
+    assert.ok(winter.sunDirection[1] < summer.sunDirection[1]);
+    assert.ok(winter.sunIntensity < summer.sunIntensity);
+    assert.ok(winter.fogFar < summer.fogFar);
+    const spread = (rgb) => Math.max(...rgb) - Math.min(...rgb);
+    assert.ok(spread(winter.skyTop) < spread(summer.skyTop), "paler sky");
+  });
+
+  it("gives autumn a golden, hazy sky with a warm sun", () => {
+    const summer = atmosphereAt(0, lookOf(1));
+    const autumn = atmosphereAt(0, lookOf(2));
+    assert.ok(warmth(autumn.skyHorizon) > warmth(summer.skyHorizon));
+    assert.ok(warmth(autumn.sunColor) > warmth(summer.sunColor));
+    assert.ok(autumn.fogFar < summer.fogFar);
+  });
+
+  it("keeps the sunDirection a unit vector under a seasonal offset", () => {
+    assert.ok(close(length(atmosphereAt(0.2, lookOf(3)).sunDirection), 1));
+  });
+
+  it("keeps the fog the same colour as the horizon so hills melt into the sky", () => {
+    const winter = atmosphereAt(0.4, lookOf(3));
+    assert.deepEqual(winter.fog, winter.skyHorizon);
+  });
+});
 
 const length = ([x, y, z]) => Math.hypot(x, y, z);
 const close = (a, b, epsilon = 1e-9) => Math.abs(a - b) < epsilon;

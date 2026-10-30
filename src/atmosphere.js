@@ -55,32 +55,53 @@ function seasonalGrass(key, seasonLook, amount) {
   return mixRgb(daylight, moonlit, amount);
 }
 
+const NEUTRAL_SKY = { top: DAY.skyTop, horizon: DAY.horizon, amount: 0, fogScale: 1 };
+const NEUTRAL_LIGHT = { sunTint: WHITE, sunStrength: 1, sunElevationOffset: 0 };
+const FOG = { near: 45, far: 320 };
+
+// A season tints the sky toward its own daylight colour; the tint target fades
+// to the night colour as night falls, so seasons differ by day and converge in
+// the dark. Summer's amount is 0, so it reproduces the classic sky exactly.
+function seasonalSky(colour, tint, nightKey, sky, amount) {
+  if (sky.amount === 0) return colour;
+  return mixRgb(colour, mixRgb(tint, NIGHT[nightKey], amount), sky.amount);
+}
+
 export function atmosphereAt(dayAmount, seasonLook = null) {
   const amount = clamp(dayAmount, 0, 1);
   const twilight = twilightAmount(amount);
+  const sky = seasonLook?.sky ?? NEUTRAL_SKY;
+  const light = seasonLook?.light ?? NEUTRAL_LIGHT;
   const mix = (key) =>
     seasonLook && seasonLook[key]
       ? seasonalGrass(key, seasonLook, amount)
       : mixRgb(DAY[key], NIGHT[key], amount);
 
-  const skyHorizon = mixRgb(mix("horizon"), TWILIGHT.horizon, twilight * 0.8);
+  const skyTop = seasonalSky(mix("skyTop"), sky.top, "skyTop", sky, amount);
+  const skyMidTint = mixRgb(sky.top, sky.horizon, 0.5);
+  const skyMid = seasonalSky(mix("skyMid"), skyMidTint, "skyMid", sky, amount);
+  const horizon = seasonalSky(mix("horizon"), sky.horizon, "horizon", sky, amount);
+  const skyHorizon = mixRgb(horizon, TWILIGHT.horizon, twilight * 0.8);
   const sunVisibility = 1 - smoothstep(0.55, 0.95, amount);
+  const sunElevation = along(SUN_PATH.elevation, amount) + light.sunElevationOffset;
 
   return {
     dayAmount: amount,
     twilight,
-    skyTop: mix("skyTop"),
-    skyMid: mixRgb(mix("skyMid"), TWILIGHT.sky, twilight * 0.45),
+    skyTop,
+    skyMid: mixRgb(skyMid, TWILIGHT.sky, twilight * 0.45),
     skyHorizon,
     fog: [...skyHorizon],
+    fogNear: FOG.near * sky.fogScale,
+    fogFar: FOG.far * sky.fogScale,
     hill: mix("hill"),
     grassTip: mix("grassTip"),
     grassBase: mix("grassBase"),
     cloud: mixRgb(mix("cloud"), TWILIGHT.horizon, twilight * 0.5),
     cloudOpacity: 1 - amount * 0.6,
-    sunDirection: directionFrom(along(SUN_PATH.elevation, amount), along(SUN_PATH.azimuth, amount)),
-    sunColor: mixRgb(WHITE, TWILIGHT.sun, twilight),
-    sunIntensity: 2.6 * sunVisibility,
+    sunDirection: directionFrom(sunElevation, along(SUN_PATH.azimuth, amount)),
+    sunColor: mixRgb(light.sunTint, TWILIGHT.sun, twilight),
+    sunIntensity: 2.6 * sunVisibility * light.sunStrength,
     sunVisibility,
     moonDirection: directionFrom(
       along(MOON_PATH.elevation, amount),

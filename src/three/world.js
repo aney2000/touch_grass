@@ -17,6 +17,8 @@ export function createWorld(systems) {
     scene,
     update(frame) {
       setSrgb(scene.fog.color, frame.atmosphere.fog);
+      scene.fog.near = frame.atmosphere.fogNear ?? FOG_NEAR;
+      scene.fog.far = frame.atmosphere.fogFar ?? FOG_FAR;
       for (const system of systems) system.update?.(frame);
     },
     dispose() {

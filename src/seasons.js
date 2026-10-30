@@ -75,6 +75,17 @@ function blendLook(weightsFor) {
     snowCover: blendNumber("groundSnow", (look) => look.snowCover),
     grassSnow: blendNumber("grassSnow", (look) => look.snowCover),
     groundTint: blendColour("groundSnow", (look) => look.groundTint),
+    sky: {
+      top: blendColour("sky", (look) => look.sky.top),
+      horizon: blendColour("sky", (look) => look.sky.horizon),
+      amount: blendNumber("sky", (look) => look.sky.amount),
+      fogScale: blendNumber("sky", (look) => look.sky.fogScale),
+    },
+    light: {
+      sunTint: blendColour("light", (look) => look.light.sunTint),
+      sunStrength: blendNumber("light", (look) => look.light.sunStrength),
+      sunElevationOffset: blendNumber("light", (look) => look.light.sunElevationOffset),
+    },
     foliage: {
       color: blendColour("foliageColor", (look) => look.foliage.color),
       density: blendNumber("foliageDensity", (look) => look.foliage.density),
