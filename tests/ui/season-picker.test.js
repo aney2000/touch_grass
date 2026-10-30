@@ -30,7 +30,7 @@ function setup({ shortcuts } = {}) {
     shortcuts,
   });
   const pressed = () =>
-    buttons.filter(({ element }) => element.getAttribute("aria-pressed") === "true");
+    buttons.filter(({ element }) => element.getAttribute("aria-checked") === "true");
   const button = (season) => buttons.find((entry) => entry.season === season).element;
   return { buttons, sceneElement, keyTarget, announcer, calls, binding, pressed, button };
 }
@@ -60,7 +60,37 @@ describe("bindSeasonPicker", () => {
       pressed().map(({ season }) => season),
       ["winter"],
     );
-    assert.equal(button("summer").getAttribute("aria-pressed"), "false");
+    assert.equal(button("summer").getAttribute("aria-checked"), "false");
+    assert.equal(button("winter").hasAttribute("aria-pressed"), false);
+  });
+
+  it("keeps a single tab stop on the checked season (roving tabindex)", () => {
+    const { button } = setup();
+    assert.equal(button("summer").getAttribute("tabindex"), "0");
+    assert.equal(button("spring").getAttribute("tabindex"), "-1");
+    button("autumn").click();
+    assert.equal(button("autumn").getAttribute("tabindex"), "0");
+    assert.equal(button("summer").getAttribute("tabindex"), "-1");
+  });
+
+  it("moves, selects and focuses with the arrow keys, wrapping at the ends", () => {
+    const { button, calls } = setup();
+    button("summer").dispatchEvent(keydown("ArrowRight"));
+    assert.deepEqual(calls.at(-1), ["autumn", 321]);
+    assert.equal(fakeElement.focused, button("autumn"));
+    button("autumn").dispatchEvent(keydown("ArrowLeft"));
+    assert.deepEqual(calls.at(-1), ["summer", 321]);
+    button("summer").dispatchEvent(keydown("ArrowLeft"));
+    button("spring").dispatchEvent(keydown("ArrowLeft"));
+    assert.deepEqual(calls.at(-1), ["winter", 321]);
+    assert.equal(button("winter").getAttribute("aria-checked"), "true");
+  });
+
+  it("claims the arrow key so the page does not scroll", () => {
+    const { button } = setup();
+    const event = keydown("ArrowRight");
+    button("summer").dispatchEvent(event);
+    assert.equal(event.defaultPrevented, true);
   });
 
   it("announces the new season for screen readers", () => {

@@ -52,9 +52,19 @@ describe("scene control dock", () => {
 describe("season picker", () => {
   const SEASON_KEYS = { spring: 1, summer: 2, autumn: 3, winter: 4 };
 
-  it("sits in the dock as a labelled group", () => {
+  it("sits in the dock as a labelled radio group with one tab stop", () => {
     const footer = elementBlock(/<footer class="scene-controls"/, "footer");
-    assert.match(footer, /<div class="season-picker" role="group" aria-label="Season"/);
+    assert.match(footer, /<div class="season-picker" role="radiogroup" aria-label="Season"/);
+    const picker = elementBlock(/<div class="season-picker"/, "div");
+    const radios = picker.match(/<button[^>]*>/g);
+    assert.equal(radios.length, 4);
+    for (const radio of radios) {
+      assert.match(radio, /role="radio"/);
+      assert.doesNotMatch(radio, /aria-pressed/);
+    }
+    assert.equal(picker.match(/aria-checked="true"/g).length, 1);
+    assert.equal(picker.match(/tabindex="0"/g).length, 1);
+    assert.equal(picker.match(/tabindex="-1"/g).length, 3);
   });
 
   it("offers one button per season with its number shortcut and a coloured dot", () => {
