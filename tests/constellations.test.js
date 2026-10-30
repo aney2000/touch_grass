@@ -7,6 +7,10 @@ import {
   pickConstellation,
   findStar,
   angleBetween,
+  SKY_SCALE,
+  starFlux,
+  starColor,
+  scintillation,
 } from "../src/constellations.js";
 import { atmosphereAt } from "../src/atmosphere.js";
 
@@ -22,16 +26,15 @@ describe("constellations", () => {
 
   it("keeps the Big Dipper's seven stars and its bowl and handle", () => {
     const dipper = byName("Big Dipper");
-    assert.equal(dipper.stars.length, 7);
     assert.ok(dipper.lines.length >= 6 && dipper.lines.length <= 7);
     assert.deepEqual(
-      dipper.stars.map((star) => star.name),
+      dipper.stars.slice(0, 7).map((star) => star.name),
       ["Dubhe", "Merak", "Phecda", "Megrez", "Alioth", "Mizar", "Alkaid"],
     );
   });
 
   it("gives Cassiopeia a five-star W and Orion a three-star belt", () => {
-    assert.equal(byName("Cassiopeia").stars.length, 5);
+    assert.equal(new Set(byName("Cassiopeia").lines.flat()).size, 5);
     assert.equal(byName("Cassiopeia").lines.length, 4);
     const orion = byName("Orion").stars.map((star) => star.name);
     for (const name of [
@@ -122,5 +125,66 @@ describe("constellations", () => {
       pickConstellation(constellationDirection(findStar("Big Dipper", "Mizar"))),
       "Big Dipper",
     );
+  });
+
+  it("adds the real faint neighbours, not just line endpoints", () => {
+    const dipper = byName("Big Dipper");
+    const mizar = constellationDirection(findStar("Big Dipper", "Mizar"));
+    const alcor = findStar("Big Dipper", "Alcor");
+    assert.ok(alcor && alcor.magnitude > 3.5);
+    assert.ok(angleBetween(mizar, constellationDirection(alcor)) < 0.4 * (Math.PI / 180));
+    assert.ok(!dipper.lines.flat().includes(dipper.stars.indexOf(alcor)), "Alcor is no vertex");
+    assert.ok(findStar("Orion", "Meissa"));
+    assert.ok(findStar("Orion", "Hatysa"));
+    assert.equal(findStar("Orion", "Orion Nebula").kind, "nebula");
+  });
+
+  it("gives every star a real B-V colour index", () => {
+    for (const { stars } of CONSTELLATIONS) {
+      for (const star of stars) assert.equal(typeof star.bv, "number", star.name);
+    }
+  });
+
+  it("scales flux with Pogson's law", () => {
+    assert.ok(Math.abs(starFlux(0) / starFlux(5) - 100) < 1e-9);
+    assert.ok(starFlux(0.1) > starFlux(2) && starFlux(2) > starFlux(4));
+  });
+
+  it("tints stars subtly by colour index", () => {
+    const [br, , bb] = starColor(findStar("Orion", "Betelgeuse").bv);
+    const [rr, , rb] = starColor(findStar("Orion", "Rigel").bv);
+    const [dr, , db] = starColor(findStar("Big Dipper", "Dubhe").bv);
+    const [pr, pg, pb] = starColor(findStar("Little Dipper", "Polaris").bv);
+    assert.ok(br > bb + 0.3, "Betelgeuse orange-red");
+    assert.ok(rb > rr, "Rigel blue-white");
+    assert.ok(dr > db + 0.15, "Dubhe yellow-orange");
+    assert.ok(pr >= pg && pg > pb && pb > 0.7, "Polaris yellowish-white");
+    for (const value of [...starColor(-0.4), ...starColor(2.5)]) {
+      assert.ok(value >= 0 && value <= 1);
+    }
+  });
+
+  it("scintillates more near the horizon than overhead", () => {
+    assert.ok(scintillation(0.2) > scintillation(0.6));
+    assert.ok(scintillation(0.6) > scintillation(Math.PI / 2));
+    assert.ok(scintillation(Math.PI / 2) < 0.1, "subtle overhead");
+    assert.ok(scintillation(0.05) <= 0.5);
+  });
+
+  it("keeps the figures' true angular sizes relative to one another", () => {
+    const span = (name) => {
+      const dirs = byName(name).stars.map(constellationDirection);
+      let widest = 0;
+      for (const a of dirs) for (const b of dirs) widest = Math.max(widest, angleBetween(a, b));
+      return widest / (Math.PI / 180) / SKY_SCALE;
+    };
+    for (const [name, degrees] of [
+      ["Big Dipper", 25],
+      ["Orion", 20],
+      ["Cassiopeia", 13],
+    ]) {
+      const measured = span(name);
+      assert.ok(Math.abs(measured - degrees) / degrees < 0.15, `${name} spans ${measured} deg`);
+    }
   });
 });
