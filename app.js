@@ -2,7 +2,8 @@
 // then runs the animation loop. All the heavy lifting lives in ./src.
 
 import { Scene } from "./src/scene.js";
-import { createPointerInput } from "./src/input.js";
+import { createPointerInput, toNdc } from "./src/input.js";
+import { createRenderLoop, bindContextLoss } from "./src/loop.js";
 import { cameraPoseAt } from "./src/camera-rig.js";
 import { mixHex } from "./src/scene-math.js";
 import { COUNTS, dayPalette, nightPalette } from "./src/config.js";
@@ -85,13 +86,45 @@ const world = createWorld([
   }),
 ]);
 
+const loop = createRenderLoop({
+  raf: (callback) => window.requestAnimationFrame(callback),
+  cancelRaf: (id) => window.cancelAnimationFrame(id),
+  onFrame: frame,
+  onFatal: (error) => fallBackToStatic(error),
+  isHidden: () => document.hidden,
+});
+
+let staticFallback = false;
+// Without WebGL (or after it breaks) the CSS backdrop still shows a calm,
+// static field, so every failure path lands here rather than on a blank page.
+function fallBackToStatic(reason) {
+  loop.stop();
+  sceneElement.classList.add("scene--static");
+  if (staticFallback) return;
+  staticFallback = true;
+  console.warn("Stillfield: showing the static meadow.", reason);
+}
+
 let stage;
 try {
   stage = createStage(canvas, { scene: world.scene, camera, ...stageOptionsFor(quality) });
-} catch {
-  // Without WebGL the CSS backdrop still shows a calm, static field.
-  sceneElement.classList.add("scene--static");
+} catch (error) {
+  fallBackToStatic(error);
 }
+
+// A lost context shows the static meadow at once. The stage cannot rebuild its
+// GPU resources in place, so a restored context gets a fresh page load; the
+// module flag stops repeated restore events from queuing several reloads.
+let reloadQueued = false;
+bindContextLoss({
+  canvas,
+  onLost: () => fallBackToStatic("WebGL context lost"),
+  onRestored: () => {
+    if (reloadQueued) return;
+    reloadQueued = true;
+    window.location.reload();
+  },
+});
 
 createPointerInput({ canvas, sceneElement, model, pick: createGroundPicker(camera) });
 
@@ -136,17 +169,8 @@ function updateThemeColor() {
 }
 
 let lastFrameAt = null;
-let running = true;
-let framePending = false;
 
-function scheduleFrame() {
-  framePending = true;
-  window.requestAnimationFrame(frame);
-}
-
-function frame(now = 0) {
-  framePending = false;
-  if (!running) return;
+function frame(now) {
   if (lastFrameAt !== null && governor.sample(now - lastFrameAt, now)) lowerQuality();
   lastFrameAt = now;
   model.advance(now);
@@ -164,7 +188,6 @@ function frame(now = 0) {
   clockView.render(model.clock());
   zenMode.update(now);
   constellationToggle.sync();
-  scheduleFrame();
 }
 
 // The button, or the N key anywhere, switches between day and night.
@@ -214,11 +237,7 @@ const constellationToggle = bindConstellationToggle({
 const pickSky = createSkyPicker(camera);
 canvas.addEventListener("click", (event) => {
   if (!model.isNight) return;
-  const bounds = canvas.getBoundingClientRect();
-  const name = pickSky({
-    x: ((event.clientX - bounds.left) / bounds.width) * 2 - 1,
-    y: 1 - ((event.clientY - bounds.top) / bounds.height) * 2,
-  });
+  const name = pickSky(toNdc(event, canvas.getBoundingClientRect()));
   if (!name) return;
   model.highlightConstellation(name, model.now);
   constellationToggle.announce(name);
@@ -232,15 +251,14 @@ reducedMotion.addEventListener("change", (event) => {
 // so the meadow resumes without a jump.
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
-    running = false;
+    loop.pause();
     return;
   }
-  if (running) return;
-  running = true;
   lastFrameAt = null;
-  if (!framePending) scheduleFrame();
+  loop.resume();
 });
 
 window.addEventListener("resize", queueResize);
 resize();
-scheduleFrame();
+// No stage means nothing to draw, so the world is never updated at all.
+if (stage) loop.start();
