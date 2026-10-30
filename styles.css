@@ -60,7 +60,8 @@ a {
   inset: 0;
   width: 100%;
   height: 100%;
-  touch-action: pan-y;
+  /* Drags brush the grass; they must not scroll or pull-to-refresh. */
+  touch-action: none;
 }
 
 .scene--touching .scene__canvas {
@@ -213,11 +214,6 @@ a {
     color 180ms ease,
     box-shadow 180ms ease,
     transform 180ms ease;
-}
-
-.dock-button:hover {
-  box-shadow: 0 9px 26px rgb(20 56 40 / 18%);
-  transform: translateY(-2px);
 }
 
 .dock-button:active {
@@ -562,10 +558,10 @@ a {
   bottom: max(28px, env(safe-area-inset-bottom));
   left: max(28px, env(safe-area-inset-left));
   display: inline-flex;
-  min-height: 36px;
+  min-height: 44px;
   align-items: center;
   gap: 8px;
-  padding: 0 13px 0 9px;
+  padding: 0 15px 0 12px;
   border: 1px solid rgb(255 255 255 / 40%);
   border-radius: 999px;
   background: rgb(255 253 245 / 38%);
@@ -575,7 +571,7 @@ a {
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
-  opacity: 0.55;
+  opacity: 0.8;
   backdrop-filter: blur(6px);
   transition: opacity 300ms ease;
 }
@@ -584,9 +580,27 @@ a {
   display: none;
 }
 
-.zen-countdown:hover,
 .zen-countdown:focus-visible {
   opacity: 1;
+}
+
+/* Hover lifts only where a pointer can hover; on touch it would stick. */
+@media (hover: hover) {
+  .dock-button:hover {
+    box-shadow: 0 9px 26px rgb(20 56 40 / 18%);
+    transform: translateY(-2px);
+  }
+
+  .zen-countdown:hover {
+    opacity: 1;
+  }
+}
+
+/* Touch screens have no keyboard to hint at: just invite a brush. */
+@media (hover: none) and (pointer: coarse) {
+  .scene-hint__keys {
+    display: none;
+  }
 }
 
 .zen-countdown:focus-visible {

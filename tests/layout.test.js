@@ -144,3 +144,44 @@ describe("hosting badge clearance", () => {
     assert.match(narrow, /\.scene-hint\s*\{[^}]*bottom:[^;]*var\(--badge-clearance-y\)/);
   });
 });
+
+function mediaBlock(query) {
+  const start = css.indexOf(`@media ${query}`);
+  assert.ok(start >= 0, `expected @media ${query}`);
+  let depth = 0;
+  for (let i = css.indexOf("{", start); i < css.length; i += 1) {
+    if (css[i] === "{") depth += 1;
+    if (css[i] === "}" && --depth === 0) return css.slice(start, i + 1);
+  }
+  return css.slice(start);
+}
+
+const TOUCH = "(hover: none) and (pointer: coarse)";
+
+describe("mobile and touch", () => {
+  it("lets the page extend under the notch so safe-area insets apply", () => {
+    assert.match(html, /<meta name="viewport" content="[^"]*viewport-fit=cover/);
+  });
+
+  it("keeps drags on the canvas for the grass, not for scrolling or pull-to-refresh", () => {
+    assert.match(ruleBody(".scene__canvas"), /touch-action:\s*none/);
+  });
+
+  it("gives the zen countdown a 44px tap target and readable contrast", () => {
+    const body = ruleBody(".zen-countdown");
+    assert.match(body, /min-height:\s*44px/);
+    const opacity = Number(body.match(/opacity:\s*([\d.]+)/)[1]);
+    assert.ok(opacity >= 0.75, `opacity ${opacity}`);
+  });
+
+  it("only lifts buttons on hover where hovering exists", () => {
+    const outside = css.replace(mediaBlock("(hover: hover)"), "");
+    assert.doesNotMatch(outside, /:hover/);
+    assert.match(mediaBlock("(hover: hover)"), /\.dock-button:hover/);
+  });
+
+  it("hides the keyboard part of the hint on touch screens", () => {
+    assert.match(html, /<span class="scene-hint__keys">/);
+    assert.match(mediaBlock(TOUCH), /\.scene-hint__keys\s*\{[^}]*display:\s*none/);
+  });
+});
