@@ -191,3 +191,41 @@ describe("Scene seasons", () => {
     assert.throws(() => new Scene().setSeason("monsoon", 0), RangeError);
   });
 });
+
+describe("Scene constellations", () => {
+  it("starts with constellations hidden", () => {
+    const scene = new Scene();
+    scene.advance(0);
+    assert.equal(scene.constellationsVisible, false);
+    assert.equal(scene.frame().constellations.reveal, 0);
+    assert.equal(scene.frame().constellations.highlight, null);
+  });
+
+  it("tweens the reveal in and out", () => {
+    const scene = new Scene();
+    scene.advance(0);
+    assert.equal(scene.toggleConstellations(0), true);
+    scene.advance(300);
+    const mid = scene.frame().constellations.reveal;
+    assert.ok(mid > 0 && mid < 1, `mid ${mid}`);
+    settle(scene, 300, 2000);
+    assert.equal(scene.frame().constellations.reveal, 1);
+    scene.setConstellationsVisible(false, scene.now);
+    settle(scene, scene.now, 2000);
+    assert.equal(scene.frame().constellations.reveal, 0);
+  });
+
+  it("highlights a spotted constellation then fades it after a few seconds", () => {
+    const scene = new Scene();
+    scene.advance(0);
+    scene.highlightConstellation("Orion", 0);
+    settle(scene, 0, 1000);
+    let state = scene.frame().constellations;
+    assert.equal(state.highlight, "Orion");
+    assert.ok(state.highlightAmount > 0.9);
+    settle(scene, scene.now, 7000);
+    state = scene.frame().constellations;
+    assert.equal(state.highlightAmount, 0);
+    assert.equal(state.highlight, null);
+  });
+});

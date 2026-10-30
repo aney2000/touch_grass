@@ -31,6 +31,9 @@ function seasonSnapshot(position) {
   return { name: dominantSeason(weights), weights, look: seasonLook(weights) };
 }
 
+const CONSTELLATION_REVEAL_MS = 900;
+const HIGHLIGHT_HOLD_MS = 6000;
+
 const MAX_FRAME_DELTA_MS = 48;
 const REDUCED_MOTION_SCALE = 0.25;
 const PARALLAX_EASE_MS = 280;
@@ -52,6 +55,14 @@ export class Scene {
 
     this.targetNight = 0;
     this.tween = createTween(0);
+
+    this.constellationsVisible = false;
+    this.constellationTween = createTween(0);
+    this.constellationReveal = 0;
+    this.highlightName = null;
+    this.highlightAt = -Infinity;
+    this.highlightTween = createTween(0);
+    this.highlightAmount = 0;
 
     this.gusts = [];
     this.gustBuffer = gustUniforms([], 0);
@@ -91,6 +102,7 @@ export class Scene {
     this.seasonState = seasonSnapshot(this.seasonPositionValue);
     this.atmosphere = atmosphereAt(this.dayAmount, this.seasonState.look);
 
+    this.advanceConstellations(now);
     pruneGusts(this.gusts, now);
     this.touch = followTouch(this.touch, this.touchInput, delta);
     const ease = 1 - Math.exp(-delta / PARALLAX_EASE_MS);
@@ -117,6 +129,40 @@ export class Scene {
     const target = nearestSeasonTarget(this.seasonPositionValue, name);
     this.targetSeason = name;
     this.seasonTween.retarget(target, this.seasonPositionValue, now);
+    return name;
+  }
+
+  advanceConstellations(now) {
+    this.constellationReveal = this.constellationTween.valueAt(now, CONSTELLATION_REVEAL_MS);
+    if (this.highlightName && this.highlightTween.target === 1) {
+      if (now - this.highlightAt >= HIGHLIGHT_HOLD_MS) {
+        this.highlightTween.retarget(0, this.highlightAmount, now);
+      }
+    }
+    this.highlightAmount = this.highlightTween.valueAt(now, CONSTELLATION_REVEAL_MS);
+    if (this.highlightTween.target === 0 && this.highlightAmount === 0) this.highlightName = null;
+  }
+
+  setConstellationsVisible(visible, now) {
+    this.constellationsVisible = Boolean(visible);
+    this.constellationTween.retarget(
+      this.constellationsVisible ? 1 : 0,
+      this.constellationReveal,
+      now,
+    );
+    return this.constellationsVisible;
+  }
+
+  toggleConstellations(now) {
+    return this.setConstellationsVisible(!this.constellationsVisible, now);
+  }
+
+  // Briefly outline one constellation (after it was spotted); fades after ~6s.
+  highlightConstellation(name, now) {
+    const from = this.highlightName === name ? this.highlightAmount : 0;
+    this.highlightName = name;
+    this.highlightAt = now;
+    this.highlightTween.retarget(1, from, now);
     return name;
   }
 
@@ -149,6 +195,12 @@ export class Scene {
       motionScale: this.motionScale,
       pointer: this.pointer,
       fireflies: this.fireflies,
+      constellations: {
+        visible: this.constellationsVisible,
+        reveal: this.constellationReveal,
+        highlight: this.highlightName,
+        highlightAmount: this.highlightAmount,
+      },
       wind: {
         gusts: gustUniforms(this.gusts, this.now, this.gustBuffer),
         touch: this.touch,
