@@ -14,10 +14,21 @@ export function birdsForTier(tier) {
   return TIER_BIRDS[tier] ?? TIER_BIRDS.mid;
 }
 
-// Flights per second: ~1 per 12 s at full day, fading through dusk, none at night.
+// Cumulative odds of a flock of 1, 2, 3, 4 and 5: mostly lone birds and pairs.
+const FLOCK_ODDS = [0.4, 0.72, 0.92, 0.97, 1];
+// Jitter around the mean interval: 0.7-1.5x, so ~14-30 s at full day.
+const INTERVAL_MIN = 0.7;
+const INTERVAL_SPAN = 0.8;
+
+// Flights per second: ~1 per 20 s at full day, fading through dusk, none at night.
 export function flightRate({ dayAmount, season }) {
   const light = Math.min(1, Math.max(0, (dayAmount - 0.3) / 0.6));
-  return ((light * light) / 12) * (SEASON_RATE[season?.name] ?? 1);
+  return ((light * light) / 20) * (SEASON_RATE[season?.name] ?? 1);
+}
+
+function flockSize(random) {
+  const roll = random();
+  return FLOCK_ODDS.findIndex((odds) => roll < odds) + 1 || FLOCK_ODDS.length;
 }
 
 function lerp(a, b, t) {
@@ -84,7 +95,7 @@ function planRoute(aviary) {
 function launch(aviary) {
   const { random } = aviary;
   const room = aviary.maxBirds - aviary.birds.length;
-  const size = Math.min(room, 1 + Math.floor(random() * 5));
+  const size = Math.min(room, flockSize(random));
   if (size <= 0) return;
   const route = planRoute(aviary);
   aviary.flightsLaunched += 1;
@@ -142,7 +153,7 @@ export function createAviary({ canopies = [], random = Math.random, maxBirds = 6
     birds: [],
     nextId: 0,
     flightsLaunched: 0,
-    untilNext: 6 + random() * 12,
+    untilNext: 8 + random() * 12,
   };
 }
 
@@ -157,7 +168,7 @@ export function stepAviary(aviary, dtSec, { dayAmount = 1, season, motionScale =
   if (aviary.untilNext <= 0) {
     launch(aviary);
     // Jittered around the mean interval, so flights never feel metronomic.
-    aviary.untilNext = (0.5 + aviary.random()) / rate;
+    aviary.untilNext = (INTERVAL_MIN + aviary.random() * INTERVAL_SPAN) / rate;
   }
   return aviary;
 }

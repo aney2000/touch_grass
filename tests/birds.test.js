@@ -42,6 +42,42 @@ describe("flightRate", () => {
   });
 });
 
+describe("a calm sky", () => {
+  function observe(seconds) {
+    const aviary = createAviary({ canopies, random: seeded(42), maxBirds: 50 });
+    const launches = [];
+    const sizes = [];
+    let flights = 0;
+    let t = 0;
+    for (; t < seconds; t += 0.05) {
+      const before = aviary.birds.length;
+      stepAviary(aviary, 0.05, { dayAmount: 1, season: summer });
+      if (aviary.flightsLaunched > flights) {
+        flights = aviary.flightsLaunched;
+        launches.push(t);
+        sizes.push(aviary.birds.length - before);
+      }
+    }
+    return { launches, sizes };
+  }
+
+  it("sends a flight about every 20 s at full day, 14 to 30 s apart", () => {
+    const { launches } = observe(4000);
+    const gaps = launches.slice(1).map((t, i) => t - launches[i]);
+    const mean = gaps.reduce((a, b) => a + b, 0) / gaps.length;
+    assert.ok(mean > 18 && mean < 24, `mean gap ${mean}`);
+    for (const gap of gaps) assert.ok(gap >= 13.9 && gap <= 30.1, `gap ${gap}`);
+  });
+
+  it("flies mostly alone or in twos and threes; four or five is a rare sight", () => {
+    const { sizes } = observe(8000);
+    const large = sizes.filter((size) => size >= 4).length;
+    assert.ok(sizes.every((size) => size >= 1 && size <= 5));
+    assert.ok(large > 0, "a bigger flock still happens now and then");
+    assert.ok(large / sizes.length <= 0.1, `${large} of ${sizes.length} flocks were large`);
+  });
+});
+
 describe("birdsForTier", () => {
   it("scales the flock budget with quality", () => {
     assert.deepEqual(["low", "mid", "high"].map(birdsForTier), [4, 6, 8]);
