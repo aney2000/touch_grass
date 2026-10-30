@@ -22,9 +22,16 @@ export function pruneGusts(gusts, now, maxAge = GUST_MAX_AGE_MS) {
 // Flatten gusts into [x, z, ageSeconds, strength] quadruples for a vec4 uniform array.
 export function gustUniforms(gusts, now, out = new Float32Array(GUST_LIMIT * 4)) {
   out.fill(0);
-  gusts.slice(-GUST_LIMIT).forEach((gust, index) => {
-    out.set([gust.x, gust.z, (now - gust.startedAt) / 1000, gust.strength], index * 4);
-  });
+  // Called every frame: index directly instead of slicing/allocating.
+  const start = Math.max(0, gusts.length - GUST_LIMIT);
+  for (let i = start; i < gusts.length; i += 1) {
+    const gust = gusts[i];
+    const o = (i - start) * 4;
+    out[o] = gust.x;
+    out[o + 1] = gust.z;
+    out[o + 2] = (now - gust.startedAt) / 1000;
+    out[o + 3] = gust.strength;
+  }
   return out;
 }
 

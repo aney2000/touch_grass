@@ -98,9 +98,17 @@ export class Scene {
     const duration = this.prefersReducedMotion ? REDUCED_MOTION_DAY_NIGHT_MS : DAY_NIGHT_MS;
     this.dayAmount = this.tween.valueAt(now, duration);
     const seasonDuration = this.prefersReducedMotion ? REDUCED_MOTION_SEASON_MS : SEASON_MS;
-    this.seasonPositionValue = this.seasonTween.valueAt(now, seasonDuration);
-    this.seasonState = seasonSnapshot(this.seasonPositionValue);
-    this.atmosphere = atmosphereAt(this.dayAmount, this.seasonState.look);
+    const position = this.seasonTween.valueAt(now, seasonDuration);
+    // Rebuild the season look and atmosphere only when their inputs move: at
+    // rest (most frames) they are reused, so the frame loop allocates nothing.
+    const seasonChanged = position !== this.seasonPositionValue;
+    if (seasonChanged) {
+      this.seasonPositionValue = position;
+      this.seasonState = seasonSnapshot(position);
+    }
+    if (seasonChanged || this.dayAmount !== this.atmosphere.dayAmount) {
+      this.atmosphere = atmosphereAt(this.dayAmount, this.seasonState.look);
+    }
 
     this.advanceConstellations(now);
     pruneGusts(this.gusts, now);

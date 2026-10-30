@@ -137,6 +137,29 @@ describe("Scene", () => {
   });
 });
 
+describe("Scene per-frame allocations", () => {
+  it("reuses the season snapshot and atmosphere while nothing changes", () => {
+    const scene = new Scene();
+    scene.advance(0);
+    const { season, atmosphere } = scene.frame();
+    scene.advance(16);
+    scene.advance(32);
+    const next = scene.frame();
+    assert.equal(next.season, season);
+    assert.equal(next.atmosphere, atmosphere);
+  });
+
+  it("reuses one gust buffer across frames", () => {
+    const scene = new Scene();
+    scene.advance(0);
+    const { gusts } = scene.frame().wind;
+    scene.pushGust({ x: 1, z: 1 }, 1, 10);
+    scene.advance(16);
+    assert.equal(scene.frame().wind.gusts, gusts);
+    assert.ok(gusts[3] > 0);
+  });
+});
+
 describe("Scene seasons", () => {
   it("starts in summer, the look closest to the classic meadow", () => {
     const scene = new Scene();
