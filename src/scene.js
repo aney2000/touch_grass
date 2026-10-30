@@ -38,6 +38,13 @@ function seasonSnapshot(transition) {
   };
 }
 
+// A season change opens with a soft breeze rolling across the meadow, the
+// cue that something is about to change, like a shift in the weather.
+const SEASON_BREEZE = Object.freeze([
+  { x: -6, z: -8, strength: 0.45 },
+  { x: 5, z: -14, strength: 0.35 },
+]);
+
 const CONSTELLATION_REVEAL_MS = 900;
 const HIGHLIGHT_HOLD_MS = 6000;
 
@@ -149,9 +156,13 @@ export class Scene {
   // Morph to a season from the current blend, the shortest way round. Progress
   // runs linearly; the choreography eases each channel in its own window.
   setSeason(name, now) {
+    const target = nearestSeasonTarget(this.seasonPositionValue, name);
+    if (target !== this.seasonPositionValue) {
+      for (const { strength, ...point } of SEASON_BREEZE) this.pushGust(point, strength, now);
+    }
     this.targetSeason = name;
     this.seasonStart = this.seasonPositionValue;
-    this.seasonTarget = nearestSeasonTarget(this.seasonPositionValue, name);
+    this.seasonTarget = target;
     this.seasonStartedAt = now;
     this.seasonProgress = null;
     return name;

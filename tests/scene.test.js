@@ -96,6 +96,28 @@ describe("Scene", () => {
     assert.equal(scene.frame().wind.gusts[3], 0);
   });
 
+  it("sends a soft breeze across the meadow when a season change begins", () => {
+    const scene = new Scene();
+    scene.advance(0);
+    scene.setSeason("autumn", 0);
+    scene.advance(16);
+    const { gusts } = scene.frame().wind;
+    const active = [3, 7, 11, 15].filter((index) => gusts[index] > 0);
+    assert.ok(active.length >= 2, "at least two gust points");
+    assert.ok(
+      active.every((index) => gusts[index] <= 0.6),
+      "gentle, not a storm",
+    );
+  });
+
+  it("stays still when the chosen season is already showing", () => {
+    const scene = new Scene();
+    scene.advance(0);
+    scene.setSeason("summer", 0);
+    scene.advance(16);
+    assert.equal(scene.frame().wind.gusts[3], 0);
+  });
+
   it("eases the hand touch in while the pointer rests on the grass", () => {
     const scene = new Scene();
     scene.advance(0);
