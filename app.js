@@ -19,7 +19,7 @@ import { createLights } from "./src/three/lights.js";
 import { createCloudLayer } from "./src/three/clouds.js";
 import { createMeteorShower } from "./src/three/meteors.js";
 import { createTerrain } from "./src/three/terrain.js";
-import { createTree } from "./src/three/tree.js";
+import { createGrove, createTree } from "./src/three/tree.js";
 import { createGrass } from "./src/three/grass.js";
 import { createFireflyLights } from "./src/three/fireflies.js";
 import { createClockView } from "./src/ui/clock-view.js";
@@ -50,6 +50,7 @@ const world = createWorld([
   createCloudLayer({ count: COUNTS.clouds }),
   createMeteorShower(),
   createTerrain(),
+  createGrove({ count: compact ? 16 : 22 }),
   createTree(),
   createGrass({ count: compact ? COUNTS.grassBladesCompact : COUNTS.grassBlades }),
   createFireflyLights({ capacity: COUNTS.fireflies }),
