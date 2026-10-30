@@ -64,6 +64,18 @@ appear, and fireflies blink to life.
   250 / 400 / 600 flakes.
 - **Graceful fallback** — without WebGL, a CSS rendition of the field remains.
 
+## Life in the meadow
+
+- **Birds** — every 6–18 s by day a flock of 1–5 small birds leaves a canopy
+  and flies a smooth Bézier arc to another tree, out of view (past the sides
+  or up into the sky), or in from beyond the view to land in a tree. Perched
+  birds are hidden inside their canopy. Flights thin out through dusk, stop at
+  night and are about three times rarer in winter. Each bird flaps at 6–9 Hz
+  with short glides and banks into turns; followers trail the leader in a loose
+  echelon. Reduced motion slows the flight. At most 4 / 6 / 8 birds by tier
+  (`src/birds.js`, `src/three/birds.js`); like leaves, the dark silhouettes grow
+  with camera distance (`src/three/screen-size.js`) and fade into the haze.
+
 ## Controls
 
 The controls sit in a dock at the bottom-left, next to the clock, clear of the
