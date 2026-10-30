@@ -11,6 +11,10 @@
   --control-shadow: 0 5px 22px rgb(20 56 40 / 12%);
   --sky-ink: #fffdf5;
   --sky-ink-shadow: 0 1px 14px rgb(8 36 92 / 38%);
+  /* The host pins a "Powered by Netlify" badge (~200 x 50px) to the bottom-right
+     corner. Controls never enter this area. */
+  --badge-clearance-x: 232px;
+  --badge-clearance-y: 76px;
 }
 
 * {
@@ -63,19 +67,15 @@ a {
   cursor: pointer;
 }
 
-.masthead,
-.scene-controls {
+.masthead {
   position: absolute;
   z-index: 1;
+  top: max(27px, env(safe-area-inset-top));
   right: max(28px, env(safe-area-inset-right));
   left: max(28px, env(safe-area-inset-left));
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-
-.masthead {
-  top: max(27px, env(safe-area-inset-top));
 }
 
 .wordmark {
@@ -149,9 +149,32 @@ a {
   text-shadow: var(--sky-ink-shadow);
 }
 
+/* Clock and dock hug the bottom-left; the right padding keeps them clear of the
+   host badge, and extra rows wrap upwards rather than sliding under it. */
 .scene-controls {
+  position: absolute;
+  z-index: 1;
+  right: max(28px, env(safe-area-inset-right));
   bottom: max(28px, env(safe-area-inset-bottom));
+  left: max(28px, env(safe-area-inset-left));
+  display: flex;
+  flex-wrap: wrap;
   align-items: flex-end;
+  justify-content: flex-start;
+  gap: 14px 24px;
+  padding-right: var(--badge-clearance-x);
+  pointer-events: none;
+}
+
+.scene-controls > * {
+  pointer-events: auto;
+}
+
+.scene-dock {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
 }
 
 .scene-clock {
@@ -169,7 +192,8 @@ a {
   font-weight: 700;
 }
 
-.scene-toggle {
+/* Shared look for every button in the dock (day/night, zen, and more to come). */
+.dock-button {
   display: inline-flex;
   min-height: 46px;
   align-items: center;
@@ -183,6 +207,7 @@ a {
   cursor: pointer;
   font: inherit;
   font-size: 13px;
+  white-space: nowrap;
   transition:
     background-color 180ms ease,
     color 180ms ease,
@@ -190,17 +215,21 @@ a {
     transform 180ms ease;
 }
 
-.scene-toggle:hover {
+.dock-button:hover {
   box-shadow: 0 9px 26px rgb(20 56 40 / 18%);
   transform: translateY(-2px);
 }
 
-.scene-toggle:active {
+.dock-button:active {
   box-shadow: 0 3px 12px rgb(20 56 40 / 16%);
   transform: translateY(0);
 }
 
-.scene-toggle:focus-visible,
+.dock-button[aria-pressed="true"] {
+  border-color: #f3bd53;
+}
+
+.dock-button:focus-visible,
 .wordmark:focus-visible {
   outline: 3px solid #f3bd53;
   outline-offset: 4px;
@@ -236,9 +265,14 @@ a {
   color: #f1f2dc;
 }
 
-.scene--night .scene-toggle {
+.scene--night .dock-button {
+  border-color: rgb(246 230 187 / 22%);
   background: #20332f;
   color: #f6e6bb;
+}
+
+.scene--night .dock-button[aria-pressed="true"] {
+  border-color: rgb(243 189 83 / 70%);
 }
 
 .scene--night .scene-toggle__icon::after {
@@ -274,10 +308,22 @@ a {
     font-size: 11px;
   }
 
-  .scene-toggle {
+  .scene-controls {
+    gap: 10px 16px;
+  }
+
+  .dock-button {
     min-height: 44px;
     padding: 0 14px;
     font-size: 12px;
+  }
+}
+
+/* Too narrow to sit beside the badge: stack the controls above it instead. */
+@media (max-width: 540px) {
+  .scene-controls {
+    bottom: calc(max(20px, env(safe-area-inset-bottom)) + var(--badge-clearance-y));
+    padding-right: 0;
   }
 }
 
@@ -307,7 +353,8 @@ a {
 .scene-hint {
   position: absolute;
   z-index: 1;
-  bottom: max(26px, env(safe-area-inset-bottom));
+  /* Floats above the control row so it never collides with the dock. */
+  bottom: calc(max(28px, env(safe-area-inset-bottom)) + 66px);
   left: 50%;
   margin: 0;
   padding: 7px 14px;
