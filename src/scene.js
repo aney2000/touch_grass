@@ -20,15 +20,22 @@ import {
   seasonPosition,
   nearestSeasonTarget,
   seasonBlendAt,
-  seasonLook,
+  seasonLookDuring,
+  seasonTransitionAt,
   dominantSeason,
 } from "./seasons.js";
 
 const DEFAULT_SEASON = "summer";
 
-function seasonSnapshot(position) {
-  const weights = seasonBlendAt(position);
-  return { name: dominantSeason(weights), weights, look: seasonLook(weights) };
+function seasonSnapshot(transition) {
+  const weights = seasonBlendAt(transition.position);
+  const { from, to, t } = transition;
+  return {
+    name: dominantSeason(weights),
+    weights,
+    transition: { from, to, t },
+    look: seasonLookDuring(transition),
+  };
 }
 
 const CONSTELLATION_REVEAL_MS = 900;
@@ -48,9 +55,14 @@ export class Scene {
     this.motionClock = 0;
     this.dayAmount = 0;
     this.targetSeason = DEFAULT_SEASON;
-    this.seasonTween = createTween(seasonPosition(DEFAULT_SEASON));
     this.seasonPositionValue = seasonPosition(DEFAULT_SEASON);
-    this.seasonState = seasonSnapshot(this.seasonPositionValue);
+    this.seasonStart = this.seasonPositionValue;
+    this.seasonTarget = this.seasonPositionValue;
+    this.seasonStartedAt = -Infinity;
+    this.seasonProgress = 1;
+    this.seasonState = seasonSnapshot(
+      seasonTransitionAt(this.seasonStart, this.seasonTarget, this.seasonProgress),
+    );
     this.atmosphere = atmosphereAt(0, this.seasonState.look);
 
     this.targetNight = 0;
@@ -98,13 +110,15 @@ export class Scene {
     const duration = this.prefersReducedMotion ? REDUCED_MOTION_DAY_NIGHT_MS : DAY_NIGHT_MS;
     this.dayAmount = this.tween.valueAt(now, duration);
     const seasonDuration = this.prefersReducedMotion ? REDUCED_MOTION_SEASON_MS : SEASON_MS;
-    const position = this.seasonTween.valueAt(now, seasonDuration);
+    const progress = clamp((now - this.seasonStartedAt) / seasonDuration, 0, 1);
     // Rebuild the season look and atmosphere only when their inputs move: at
     // rest (most frames) they are reused, so the frame loop allocates nothing.
-    const seasonChanged = position !== this.seasonPositionValue;
+    const seasonChanged = progress !== this.seasonProgress;
     if (seasonChanged) {
-      this.seasonPositionValue = position;
-      this.seasonState = seasonSnapshot(position);
+      this.seasonProgress = progress;
+      const transition = seasonTransitionAt(this.seasonStart, this.seasonTarget, progress);
+      this.seasonPositionValue = transition.position;
+      this.seasonState = seasonSnapshot(transition);
     }
     if (seasonChanged || this.dayAmount !== this.atmosphere.dayAmount) {
       this.atmosphere = atmosphereAt(this.dayAmount, this.seasonState.look);
@@ -132,11 +146,14 @@ export class Scene {
     return this.targetSeason;
   }
 
-  // Morph to a season, easing from the current blend the shortest way round.
+  // Morph to a season from the current blend, the shortest way round. Progress
+  // runs linearly; the choreography eases each channel in its own window.
   setSeason(name, now) {
-    const target = nearestSeasonTarget(this.seasonPositionValue, name);
     this.targetSeason = name;
-    this.seasonTween.retarget(target, this.seasonPositionValue, now);
+    this.seasonStart = this.seasonPositionValue;
+    this.seasonTarget = nearestSeasonTarget(this.seasonPositionValue, name);
+    this.seasonStartedAt = now;
+    this.seasonProgress = null;
     return name;
   }
 

@@ -2,7 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { Scene } from "../src/scene.js";
 import { atmosphereAt } from "../src/atmosphere.js";
-import { seasonBlendAt, seasonLook } from "../src/seasons.js";
+import { seasonBlendAt, seasonLook, seasonLookDuring } from "../src/seasons.js";
 import {
   DAY_NIGHT_MS,
   REDUCED_MOTION_DAY_NIGHT_MS,
@@ -149,6 +149,15 @@ describe("Scene per-frame allocations", () => {
     assert.equal(next.atmosphere, atmosphere);
   });
 
+  it("reuses the season snapshot again once a morph has settled", () => {
+    const scene = new Scene({ prefersReducedMotion: true });
+    scene.setSeason("autumn", 0);
+    settle(scene, 0, REDUCED_MOTION_SEASON_MS);
+    const { season } = scene.frame();
+    scene.advance(REDUCED_MOTION_SEASON_MS + 500);
+    assert.equal(scene.frame().season, season);
+  });
+
   it("reuses one gust buffer across frames", () => {
     const scene = new Scene();
     scene.advance(0);
@@ -214,6 +223,27 @@ describe("Scene seasons", () => {
     scene.advance(REDUCED_MOTION_SEASON_MS);
     const { atmosphere, season } = scene.frame();
     assert.deepEqual(atmosphere.grassTip, season.look.grassTip);
+  });
+
+  it("publishes the running transition and its choreographed look", () => {
+    const scene = new Scene();
+    scene.advance(0);
+    scene.setSeason("autumn", 0);
+    scene.advance(SEASON_MS * 0.3);
+    const { transition, look } = scene.frame().season;
+    assert.equal(transition.from, "summer");
+    assert.equal(transition.to, "autumn");
+    assert.ok(Math.abs(transition.t - 0.3) < 1e-9);
+    assert.deepEqual(look, seasonLookDuring(transition));
+  });
+
+  it("walks a two-season jump through the season in between", () => {
+    const scene = new Scene();
+    scene.advance(0);
+    scene.setSeason("winter", 0);
+    scene.advance(SEASON_MS * 0.25);
+    const { transition } = scene.frame().season;
+    assert.deepEqual([transition.from, transition.to], ["summer", "autumn"]);
   });
 
   it("rejects an unknown season with a RangeError", () => {

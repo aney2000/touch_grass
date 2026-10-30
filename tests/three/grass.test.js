@@ -110,6 +110,12 @@ describe("createGrass", () => {
     assert.equal(grass.object.material.uniforms.uSnow.value, 0.5);
   });
 
+  it("follows the grass snow channel, which settles before the ground's", () => {
+    const look = { ...season(3).look, grassSnow: 0.8, snowCover: 0.2 };
+    grass.update(frame({ season: { ...season(3), look } }));
+    assert.equal(grass.object.material.uniforms.uSnow.value, 0.8);
+  });
+
   it("keeps full height and no snow when the frame carries no season", () => {
     grass.update(frame({ season: undefined }));
     assert.equal(grass.object.material.uniforms.uHeightScale.value, 1);

@@ -8,6 +8,8 @@ import {
   seasonBlendAt,
   seasonLook,
   dominantSeason,
+  seasonLookDuring,
+  seasonTransitionAt,
 } from "../src/seasons.js";
 import { hexToUnitRgb } from "../src/scene-math.js";
 
@@ -155,5 +157,79 @@ describe("seasonLook", () => {
     look.particleRates.petals = 99;
     assert.notEqual(seasonLook(seasonBlendAt(0)).grassTip[0], 99);
     assert.notEqual(SEASON_LOOKS.spring.particleRates.petals, 99);
+  });
+
+  it("exposes snow on the grass alongside snow on the ground", () => {
+    assert.equal(seasonLook(seasonBlendAt(3)).grassSnow, 1);
+    assert.equal(seasonLook(seasonBlendAt(1)).grassSnow, 0);
+  });
+});
+
+describe("seasonLookDuring", () => {
+  const during = (from, to, t) => seasonLookDuring({ from, to, t });
+
+  it("shows the from season at t=0 and the to season at t=1", () => {
+    assert.deepEqual(during("autumn", "winter", 0), seasonLook(seasonBlendAt(2)));
+    assert.deepEqual(during("autumn", "winter", 1), seasonLook(seasonBlendAt(3)));
+  });
+
+  it("blends each field by its own channel, so leaves turn before snow falls", () => {
+    const look = during("autumn", "winter", 0.3);
+    assert.notDeepEqual(look.foliage.color, hexToUnitRgb(SEASON_LOOKS.autumn.foliage.color));
+    assert.equal(look.snowCover, 0);
+    assert.equal(look.grassSnow, 0);
+    assert.equal(look.grassHeight, SEASON_LOOKS.autumn.grassHeight);
+  });
+
+  it("settles snow on the grass tips before the ground", () => {
+    const look = during("autumn", "winter", 0.6);
+    assert.ok(look.grassSnow > look.snowCover);
+  });
+
+  it("melts the ground before the grass tips in spring", () => {
+    const look = during("winter", "spring", 0.25);
+    assert.ok(look.snowCover < look.grassSnow);
+  });
+});
+
+describe("seasonTransitionAt", () => {
+  it("describes a one-step morph as a single leg", () => {
+    assert.deepEqual(seasonTransitionAt(1, 2, 0.25), {
+      position: 1.25,
+      from: "summer",
+      to: "autumn",
+      t: 0.25,
+    });
+  });
+
+  it("walks a two-season jump through the season in between, leg by leg", () => {
+    const first = seasonTransitionAt(0, 2, 0.25);
+    assert.deepEqual([first.from, first.to], ["spring", "summer"]);
+    assert.ok(Math.abs(first.t - 0.5) < 1e-9);
+    const second = seasonTransitionAt(0, 2, 0.75);
+    assert.deepEqual([second.from, second.to], ["summer", "autumn"]);
+    assert.ok(Math.abs(second.t - 0.5) < 1e-9);
+  });
+
+  it("plays backwards steps with from and to in travel order", () => {
+    const back = seasonTransitionAt(3, 2, 0.4);
+    assert.deepEqual([back.from, back.to], ["winter", "autumn"]);
+    assert.ok(Math.abs(back.t - 0.4) < 1e-9);
+  });
+
+  it("wraps winter into spring across the ring", () => {
+    const wrap = seasonTransitionAt(3, 4, 0.5);
+    assert.deepEqual([wrap.from, wrap.to, wrap.t], ["winter", "spring", 0.5]);
+  });
+
+  it("rests on the target with a completed transition", () => {
+    assert.deepEqual(seasonTransitionAt(1, 2, 1), {
+      position: 2,
+      from: "summer",
+      to: "autumn",
+      t: 1,
+    });
+    const still = seasonTransitionAt(1, 1, 0.5);
+    assert.deepEqual([still.from, still.to, still.t], ["summer", "summer", 1]);
   });
 });

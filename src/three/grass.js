@@ -249,7 +249,7 @@ export function createGrass({ count = 60000 } = {}) {
       u.uTime.value = seconds;
       u.uMotion.value = motionScale;
       u.uHeightScale.value = season?.look.grassHeight ?? 1;
-      u.uSnow.value = season?.look.snowCover ?? 0;
+      u.uSnow.value = season?.look.grassSnow ?? season?.look.snowCover ?? 0;
 
       if (wind) {
         u.uGusts.value.forEach((gust, index) => gust.fromArray(wind.gusts, index * 4));
