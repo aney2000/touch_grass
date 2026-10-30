@@ -6,6 +6,8 @@ import { createLights } from "../../src/three/lights.js";
 import { terrainHeight } from "../../src/terrain.js";
 import { setSrgb } from "../../src/three/color.js";
 import { atmosphereAt } from "../../src/atmosphere.js";
+import { seasonBlendAt, seasonLook } from "../../src/seasons.js";
+import { hexToUnitRgb } from "../../src/scene-math.js";
 
 const frame = (dayAmount) => ({ seconds: 0, atmosphere: atmosphereAt(dayAmount) });
 
@@ -39,6 +41,43 @@ describe("createTerrain", () => {
     terrain.update(frame(1));
     const expected = setSrgb(new THREE.Color(), atmosphereAt(1).hill);
     assert.ok(terrain.object.material.color.equals(expected));
+  });
+
+  const seasonFrame = (dayAmount, position) => ({
+    ...frame(dayAmount),
+    season: { look: seasonLook(seasonBlendAt(position)) },
+  });
+
+  it("keeps the summer grassland exactly as the atmosphere paints it", () => {
+    const terrain = createTerrain({ segments: 4 });
+    terrain.update(seasonFrame(0, 1));
+    const expected = setSrgb(new THREE.Color(), atmosphereAt(0).hill);
+    assert.ok(terrain.object.material.color.equals(expected));
+    assert.equal(terrain.object.material.roughness, 0.95);
+  });
+
+  it("tints the ground toward the season, browning it in autumn", () => {
+    const terrain = createTerrain({ segments: 4 });
+    terrain.update(seasonFrame(0, 2));
+    const { r, g } = terrain.object.material.color;
+    const summer = setSrgb(new THREE.Color(), atmosphereAt(0).hill);
+    assert.ok(r / g > summer.r / summer.g);
+  });
+
+  it("blankets the ground in sparkling snow white in winter", () => {
+    const terrain = createTerrain({ segments: 4 });
+    terrain.update(seasonFrame(0, 3));
+    const color = terrain.object.material.color;
+    assert.ok(color.equals(setSrgb(new THREE.Color(), hexToUnitRgb("#eef3f8"))));
+    assert.ok(terrain.object.material.roughness < 0.95);
+  });
+
+  it("still darkens the snow at night", () => {
+    const terrain = createTerrain({ segments: 4 });
+    terrain.update(seasonFrame(0, 3));
+    const day = terrain.object.material.color.getHSL({}).l;
+    terrain.update(seasonFrame(1, 3));
+    assert.ok(terrain.object.material.color.getHSL({}).l < day * 0.6);
   });
 });
 

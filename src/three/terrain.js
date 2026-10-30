@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { setSrgb } from "./color.js";
 import { terrainHeight } from "../terrain.js";
 import { smoothstep } from "../scene-math.js";
+import { groundColor, groundRoughness } from "../ground.js";
 
 const SIZE = { width: 560, depth: 380, centerZ: -130 };
 
@@ -36,8 +37,9 @@ export function createTerrain({ segments = 180 } = {}) {
 
   return {
     object,
-    update({ atmosphere }) {
-      setSrgb(material.color, atmosphere.hill);
+    update({ atmosphere, season }) {
+      setSrgb(material.color, groundColor(atmosphere, season?.look));
+      material.roughness = groundRoughness(season?.look);
     },
     dispose() {
       geometry.dispose();
