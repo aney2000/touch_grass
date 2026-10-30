@@ -2,27 +2,104 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { clockFromDayAmount, createTween } from "../src/time.js";
 
+const NOON = { hours12: 12, minutes: "00", meridiem: "PM" };
+const MIDNIGHT = { hours12: 12, minutes: "00", meridiem: "AM" };
+
 describe("clockFromDayAmount", () => {
-  it("reads 6:00 PM at full daylight", () => {
-    assert.deepEqual(clockFromDayAmount(0), { hours12: 6, minutes: "00", meridiem: "PM" });
+  describe("at rest, where the clock agrees with the sky", () => {
+    it("reads 12:00 PM at midday, when the sun is highest", () => {
+      assert.deepEqual(clockFromDayAmount(0), NOON);
+    });
+
+    it("reads 12:00 AM at deepest night, when the moon is highest", () => {
+      assert.deepEqual(clockFromDayAmount(1), MIDNIGHT);
+    });
+
+    it("shows the same endpoints whichever way the sky is heading", () => {
+      assert.deepEqual(clockFromDayAmount(0, "dusk"), clockFromDayAmount(0, "dawn"));
+      assert.deepEqual(clockFromDayAmount(1, "dusk"), clockFromDayAmount(1, "dawn"));
+    });
   });
 
-  it("reads 6:00 AM at full night", () => {
-    assert.deepEqual(clockFromDayAmount(1), { hours12: 6, minutes: "00", meridiem: "AM" });
+  describe("at dusk, heading from day into night", () => {
+    it("is the default phase", () => {
+      assert.deepEqual(clockFromDayAmount(0.5), clockFromDayAmount(0.5, "dusk"));
+    });
+
+    it("runs forward through the evening, passing 6:00 PM halfway", () => {
+      assert.deepEqual(clockFromDayAmount(0.5, "dusk"), {
+        hours12: 6,
+        minutes: "00",
+        meridiem: "PM",
+      });
+    });
+
+    it("moves the clock forward as night deepens", () => {
+      assert.deepEqual(clockFromDayAmount(0.25, "dusk"), {
+        hours12: 3,
+        minutes: "00",
+        meridiem: "PM",
+      });
+      assert.deepEqual(clockFromDayAmount(0.75, "dusk"), {
+        hours12: 9,
+        minutes: "00",
+        meridiem: "PM",
+      });
+    });
   });
 
-  it("passes through midnight at the midpoint", () => {
-    assert.deepEqual(clockFromDayAmount(0.5), { hours12: 12, minutes: "00", meridiem: "AM" });
+  describe("at dawn, heading from night into day", () => {
+    it("runs forward through the morning, passing 6:00 AM halfway", () => {
+      assert.deepEqual(clockFromDayAmount(0.5, "dawn"), {
+        hours12: 6,
+        minutes: "00",
+        meridiem: "AM",
+      });
+    });
+
+    it("moves the clock forward as daylight returns", () => {
+      assert.deepEqual(clockFromDayAmount(0.75, "dawn"), {
+        hours12: 3,
+        minutes: "00",
+        meridiem: "AM",
+      });
+      assert.deepEqual(clockFromDayAmount(0.25, "dawn"), {
+        hours12: 9,
+        minutes: "00",
+        meridiem: "AM",
+      });
+    });
   });
 
-  it("zero-pads the minutes", () => {
-    const { minutes } = clockFromDayAmount(0.01);
-    assert.equal(minutes.length, 2);
-  });
+  describe("formatting", () => {
+    it("zero-pads the minutes", () => {
+      assert.equal(clockFromDayAmount(0.01).minutes, "07");
+    });
 
-  it("clamps out-of-range input", () => {
-    assert.deepEqual(clockFromDayAmount(-5), clockFromDayAmount(0));
-    assert.deepEqual(clockFromDayAmount(5), clockFromDayAmount(1));
+    it("writes the twelve o'clock hours as 12, never 0", () => {
+      assert.deepEqual(clockFromDayAmount(0.001, "dusk"), {
+        hours12: 12,
+        minutes: "01",
+        meridiem: "PM",
+      });
+      assert.deepEqual(clockFromDayAmount(0.999, "dawn"), {
+        hours12: 12,
+        minutes: "01",
+        meridiem: "AM",
+      });
+    });
+
+    it("rounds to the nearest whole minute", () => {
+      assert.equal(clockFromDayAmount(1 / 720 / 3).minutes, "00");
+      assert.equal(clockFromDayAmount((1 / 720) * 0.6).minutes, "01");
+    });
+
+    it("clamps out-of-range input to the nearest endpoint", () => {
+      assert.deepEqual(clockFromDayAmount(-5), NOON);
+      assert.deepEqual(clockFromDayAmount(5), MIDNIGHT);
+      assert.deepEqual(clockFromDayAmount(-5, "dawn"), NOON);
+      assert.deepEqual(clockFromDayAmount(5, "dawn"), MIDNIGHT);
+    });
   });
 });
 

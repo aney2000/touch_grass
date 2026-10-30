@@ -99,8 +99,9 @@ export class Scene {
     this.pointerTarget = { x: clamp(x, -1, 1), y: clamp(y, -1, 1) };
   }
 
+  // Heading into night the clock crosses the evening; heading into day, the morning.
   clock() {
-    return clockFromDayAmount(this.dayAmount);
+    return clockFromDayAmount(this.dayAmount, this.isNight ? "dusk" : "dawn");
   }
 
   frame() {

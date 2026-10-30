@@ -36,10 +36,39 @@ describe("Scene", () => {
     assert.equal(scene.frame().motionScale < 1, true);
   });
 
-  it("reads the clock from the transition", () => {
-    const scene = new Scene();
-    scene.advance(0);
-    assert.deepEqual(scene.clock(), { hours12: 6, minutes: "00", meridiem: "PM" });
+  describe("clock", () => {
+    it("reads noon while resting in daylight", () => {
+      const scene = new Scene();
+      scene.advance(0);
+      assert.deepEqual(scene.clock(), { hours12: 12, minutes: "00", meridiem: "PM" });
+    });
+
+    it("runs through the evening while night falls", () => {
+      const scene = new Scene();
+      scene.advance(0);
+      scene.toggleNight(0);
+      scene.advance(DAY_NIGHT_MS / 2);
+      assert.equal(scene.clock().meridiem, "PM");
+      assert.ok(scene.clock().hours12 >= 4 && scene.clock().hours12 <= 8);
+    });
+
+    it("reads midnight once night has settled", () => {
+      const scene = new Scene();
+      scene.toggleNight(0);
+      settle(scene, 0, DAY_NIGHT_MS);
+      assert.deepEqual(scene.clock(), { hours12: 12, minutes: "00", meridiem: "AM" });
+    });
+
+    it("runs through the morning while day returns", () => {
+      const scene = new Scene();
+      scene.toggleNight(0);
+      settle(scene, 0, DAY_NIGHT_MS);
+      const start = DAY_NIGHT_MS + 200;
+      scene.toggleNight(start);
+      scene.advance(start + DAY_NIGHT_MS / 2);
+      assert.equal(scene.clock().meridiem, "AM");
+      assert.ok(scene.clock().hours12 >= 4 && scene.clock().hours12 <= 8);
+    });
   });
 
   it("accumulates elapsed seconds with a capped frame delta", () => {

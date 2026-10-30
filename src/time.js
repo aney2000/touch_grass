@@ -3,10 +3,19 @@
 
 import { clamp, smoothstep } from "./scene-math.js";
 
-// Map the day/night amount (0 = midday, 1 = deep night) onto a clock face.
+const MINUTES_PER_DAY = 24 * 60;
+const NOON = 12 * 60;
+
+// Map the day/night amount (0 = midday, 1 = deepest night) onto a clock face
+// that agrees with the sky: noon when the sun is highest, midnight when the
+// moon is. The phase says which half of the day the sky is travelling through,
+// so the clock always runs forward: "dusk" (day to night) crosses the evening,
+// "dawn" (night to day) crosses the morning. Both meet at the endpoints.
 // Returns the pieces so the view layer decides how to render them.
-export function clockFromDayAmount(dayAmount) {
-  const totalMinutes = Math.round(18 * 60 + clamp(dayAmount, 0, 1) * 12 * 60) % (24 * 60);
+export function clockFromDayAmount(dayAmount, phase = "dusk") {
+  const amount = clamp(dayAmount, 0, 1);
+  const minutesOfDay = phase === "dawn" ? (1 - amount) * NOON : NOON + amount * NOON;
+  const totalMinutes = Math.round(minutesOfDay) % MINUTES_PER_DAY;
   const hours = Math.floor(totalMinutes / 60);
   return {
     hours12: hours % 12 || 12,
