@@ -1,5 +1,5 @@
-// Picks a rendering budget for the device: how much grass, how many trees and
-// particles, and how expensive the pixels may be. Pure, so every rule is tested.
+// Picks a rendering budget for the device: how much grass, how many trees,
+// and how expensive the pixels may be. Pure, so every rule is tested.
 
 const MAX_PIXELS = 8e6;
 
@@ -9,7 +9,6 @@ const SETTINGS = {
   low: {
     grassBlades: 18000,
     groveTrees: 24,
-    fallingCapacity: 220,
     maxDpr: 1.25,
     msaa: 0,
     bloomScale: 0.5,
@@ -17,7 +16,6 @@ const SETTINGS = {
   mid: {
     grassBlades: 36000,
     groveTrees: 36,
-    fallingCapacity: 400,
     maxDpr: 1.5,
     msaa: 2,
     bloomScale: 0.5,
@@ -25,7 +23,6 @@ const SETTINGS = {
   high: {
     grassBlades: 60000,
     groveTrees: 48,
-    fallingCapacity: 600,
     maxDpr: 2,
     msaa: 4,
     bloomScale: 1,
@@ -48,7 +45,6 @@ function settingsFor(tier, dpr, pixelCap) {
     tier,
     grassBlades: s.grassBlades,
     groveTrees: s.groveTrees,
-    fallingCapacity: s.fallingCapacity,
     pixelRatio: Math.min(dpr, s.maxDpr, pixelCap),
     msaa: s.msaa,
     bloom: { enabled: true, scale: s.bloomScale },

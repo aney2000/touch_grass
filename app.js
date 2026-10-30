@@ -32,6 +32,7 @@ import { bindConstellationToggle } from "./src/ui/constellation-toggle.js";
 
 import { chooseQuality, stepDown, stageOptionsFor } from "./src/quality.js";
 import { createFrameGovernor } from "./src/frame-governor.js";
+import { particleBudget } from "./src/particle-budget.js";
 
 const sceneElement = document.querySelector(".scene");
 const canvas = document.querySelector("#meadow");
@@ -55,6 +56,11 @@ let quality = chooseQuality({
 });
 const governor = createFrameGovernor();
 
+// Leaves and petals are shed by the trees themselves, so the forest feeds them.
+const grove = createGrove({ count: quality.groveTrees });
+const heroTree = createTree();
+const canopies = [...grove.canopies, heroTree.canopyVolume];
+
 // The world, painted back to front. Order is the only thing that matters here.
 const world = createWorld([
   createSky(),
@@ -63,11 +69,14 @@ const world = createWorld([
   createMeteorShower(),
   createConstellations(),
   createTerrain(),
-  createGrove({ count: quality.groveTrees }),
-  createTree(),
+  grove,
+  heroTree,
   createGrass({ count: quality.grassBlades }),
   createFireflyLights({ capacity: COUNTS.fireflies }),
-  createFallingParticles({ capacity: quality.fallingCapacity }),
+  createFallingParticles({
+    canopies,
+    limits: particleBudget({ trees: canopies, tier: quality.tier }),
+  }),
 ]);
 
 let stage;

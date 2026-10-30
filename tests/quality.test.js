@@ -31,7 +31,6 @@ test("a big screen on a strong desktop gets the high tier", () => {
   assert.equal(q.tier, "high");
   assert.equal(q.grassBlades, 60000);
   assert.equal(q.groveTrees, 48);
-  assert.equal(q.fallingCapacity, 600);
   assert.equal(q.msaa, 4);
   assert.deepEqual(q.bloom, { enabled: true, scale: 1 });
 });
@@ -48,7 +47,6 @@ test("a touch phone with few cores gets the low tier", () => {
   assert.equal(q.tier, "low");
   assert.equal(q.grassBlades, 18000);
   assert.equal(q.groveTrees, 24);
-  assert.equal(q.fallingCapacity, 220);
   assert.equal(q.pixelRatio, 1.25);
   assert.equal(q.msaa, 0);
   assert.deepEqual(q.bloom, { enabled: true, scale: 0.5 });
@@ -68,7 +66,6 @@ test("a capable touch tablet is mid", () => {
   assert.equal(q.tier, "mid");
   assert.equal(q.grassBlades, 36000);
   assert.equal(q.groveTrees, 36);
-  assert.equal(q.fallingCapacity, 400);
   assert.equal(q.pixelRatio, 1.5);
   assert.equal(q.msaa, 2);
   assert.deepEqual(q.bloom, { enabled: true, scale: 0.5 });
