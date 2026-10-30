@@ -42,6 +42,15 @@ appear, and fireflies blink to life.
   the hero tree blossom, green, turn and go bare with the seasons
   (`src/forest.js`). `grove.canopies` lists canopy positions for particles and
   birds.
+- **Falling particles** — none in summer. In spring and autumn each deciduous
+  tree (conifers don't shed) drops petals or leaves from its own canopy at
+  about one per second; they drift within ~2.5 canopy radii of their tree,
+  settle on the ground and shrink away after ~1.5 s (`src/emitters.js`
+  strategies, `src/falling.js`). Leaves grow with camera distance so they stay
+  readable 40–125 m away. Winter snow is sparse, small and soft, spread over
+  the whole visible meadow and forest. `src/particle-budget.js` caps alive
+  particles: ~8 leaves per deciduous tree (≤ 120 / 200 / 300 by tier) and
+  250 / 400 / 600 flakes.
 - **Graceful fallback** — without WebGL, a CSS rendition of the field remains.
 
 ## Controls
@@ -68,7 +77,7 @@ returns.
 - **Quality tiers** (`src/quality.js`): at startup the screen size, pixel
   ratio, CPU cores, device memory, pointer type and reduced-motion preference
   pick a `low`, `mid` or `high` tier. The tier sets grass blades
-  (18k / 36k / 60k), grove trees, falling particles, pixel ratio cap
+  (18k / 36k / 60k), grove trees, the falling-particle budget, pixel ratio cap
   (1.25 / 1.5 / 2), MSAA samples (0 / 2 / 4) and bloom resolution. Effective
   pixels are clamped to about 8 MP; unknown hardware counts as mid-capable,
   and reduced motion drops one tier.
