@@ -76,6 +76,38 @@ describe("Scene", () => {
       assert.equal(scene.clock().meridiem, "AM");
       assert.ok(scene.clock().hours12 >= 4 && scene.clock().hours12 <= 8);
     });
+
+    it("runs the evening backwards when day is recalled mid-dusk, never jumping to the morning", () => {
+      const scene = new Scene();
+      scene.advance(0);
+      scene.toggleNight(0);
+      scene.advance(DAY_NIGHT_MS / 2);
+      const evening = scene.clock();
+      scene.toggleNight(DAY_NIGHT_MS / 2);
+      scene.advance(DAY_NIGHT_MS / 2 + DAY_NIGHT_MS / 4);
+      const earlier = scene.clock();
+      assert.equal(evening.meridiem, "PM");
+      assert.equal(earlier.meridiem, "PM");
+      assert.ok(earlier.hours12 % 12 < evening.hours12 % 12, "the clock rewinds toward noon");
+      settle(scene, DAY_NIGHT_MS, DAY_NIGHT_MS);
+      assert.deepEqual(scene.clock(), { hours12: 12, minutes: "00", meridiem: "PM" });
+    });
+
+    it("crosses the morning on the next full cycle after a reversed dusk", () => {
+      const scene = new Scene();
+      scene.toggleNight(0);
+      scene.advance(DAY_NIGHT_MS / 2);
+      scene.toggleNight(DAY_NIGHT_MS / 2);
+      settle(scene, DAY_NIGHT_MS / 2, DAY_NIGHT_MS);
+      const night = 3 * DAY_NIGHT_MS;
+      scene.toggleNight(night);
+      settle(scene, night, DAY_NIGHT_MS);
+      assert.deepEqual(scene.clock(), { hours12: 12, minutes: "00", meridiem: "AM" });
+      const morning = 5 * DAY_NIGHT_MS;
+      scene.toggleNight(morning);
+      scene.advance(morning + DAY_NIGHT_MS / 2);
+      assert.equal(scene.clock().meridiem, "AM");
+    });
   });
 
   it("accumulates elapsed seconds with a capped frame delta", () => {

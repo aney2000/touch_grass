@@ -74,6 +74,7 @@ export class Scene {
 
     this.targetNight = 0;
     this.tween = createTween(0);
+    this.clockPhase = "dusk";
 
     this.constellationsVisible = false;
     this.constellationTween = createTween(0);
@@ -144,6 +145,11 @@ export class Scene {
 
   // Flip between day and night, easing from wherever the transition is now.
   toggleNight(now) {
+    // The clock's half of the day is latched only when a transition leaves an
+    // endpoint; a reversal mid-way keeps it, so the clock rewinds instead of
+    // jumping twelve hours.
+    if (this.dayAmount === 0) this.clockPhase = "dusk";
+    else if (this.dayAmount === 1) this.clockPhase = "dawn";
     this.targetNight = this.targetNight ? 0 : 1;
     this.tween.retarget(this.targetNight, this.dayAmount, now);
     return this.targetNight;
@@ -216,9 +222,9 @@ export class Scene {
     this.pointerTarget = { x: clamp(x, -1, 1), y: clamp(y, -1, 1) };
   }
 
-  // Heading into night the clock crosses the evening; heading into day, the morning.
+  // Leaving day the clock crosses the evening; leaving night, the morning.
   clock() {
-    return clockFromDayAmount(this.dayAmount, this.isNight ? "dusk" : "dawn");
+    return clockFromDayAmount(this.dayAmount, this.clockPhase);
   }
 
   frame() {
