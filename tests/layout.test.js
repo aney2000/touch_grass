@@ -110,4 +110,9 @@ describe("hosting badge clearance", () => {
     assert.match(narrow, /\.scene-controls\s*\{[^}]*padding-right:\s*0/);
     assert.match(narrow, /\.scene-controls\s*\{[^}]*bottom:[^;]*var\(--badge-clearance-y\)/);
   });
+
+  it("lifts the hint along with the controls so the two never overlap", () => {
+    const narrow = css.slice(css.indexOf("@media (max-width: 540px)"));
+    assert.match(narrow, /\.scene-hint\s*\{[^}]*bottom:[^;]*var\(--badge-clearance-y\)/);
+  });
 });

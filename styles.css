@@ -325,6 +325,10 @@ a {
     bottom: calc(max(20px, env(safe-area-inset-bottom)) + var(--badge-clearance-y));
     padding-right: 0;
   }
+
+  .scene-hint {
+    bottom: calc(max(20px, env(safe-area-inset-bottom)) + var(--badge-clearance-y) + 62px);
+  }
 }
 
 @media (max-width: 360px) {
