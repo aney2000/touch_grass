@@ -25,12 +25,16 @@ appear, and fireflies blink to life.
   pointer; the field of view widens on portrait screens.
 - **Respects `prefers-reduced-motion`** — wind, clouds, fireflies, and the
   camera calm down, meteors stay away, and the transition is quicker.
-- **Spot the constellations** — on a starry night the Big Dipper, Little
-  Dipper (with Polaris), Cassiopeia and Orion shine a little brighter, placed
-  from real star coordinates so the Merak → Dubhe pointer leads to the pole
-  star. Press <kbd>C</kbd> to fade in their lines and names, or tap a
-  constellation star to outline it for a few seconds; screen readers hear
-  which one you spotted.
+- **Spot the constellations** — the night sky looks like the real one: no
+  text and no lines, just the Big Dipper (with Alcor beside Mizar), Little
+  Dipper (with Polaris), Cassiopeia and Orion (with Meissa, the sword and the
+  soft glow of the Orion Nebula), placed from real star coordinates at their
+  true relative sizes so the Merak → Dubhe pointer leads to the pole star.
+  Brightness follows apparent magnitude, colour follows each star's B−V index
+  (orange Betelgeuse, blue-white Rigel), and stars twinkle more near the
+  horizon. Press <kbd>C</kbd> to fade in a faint star-chart tracing, or tap a
+  figure at night to trace it for a few seconds while its stars gently glow;
+  screen readers announce its name.
 - **Forest** — a small forest of 24/36/48 trees (by quality tier) in a few
   copses and a forest edge, planted only where the resting camera sees them
   (in view, not behind the hills), with the centre meadow kept clear. About a
@@ -50,7 +54,7 @@ hosting badge in the bottom-right corner.
 | Brush / swipe  | —                             | Parts the grass under the pointer; brisk swipes and taps send ripples |
 | Day / night    | <kbd>N</kbd>                  | Lets night fall or morning in                                         |
 | Seasons        | <kbd>1</kbd>–<kbd>4</kbd>     | Morphs the meadow to spring, summer, autumn or winter                 |
-| Constellations | <kbd>C</kbd>                  | Outlines and names the constellations (lets night fall first by day)  |
+| Constellations | <kbd>C</kbd>                  | Traces the constellations, no labels (lets night fall first by day)   |
 | Zen            | <kbd>Z</kbd>                  | Hides all text and controls for one minute, with a small countdown    |
 | Leave zen      | <kbd>Esc</kbd> / <kbd>Z</kbd> | Brings everything back early (or click the countdown)                 |
 
