@@ -17,8 +17,13 @@ export function spottedMessage(name) {
 }
 
 export function bindConstellationToggle({ button, announcer, model, keyTarget, now, bringNight }) {
+  // Runs every frame from the loop, so it only touches the DOM on change.
+  let lastState = null;
   function sync() {
     const night = model.isNight;
+    const state = `${night}|${model.constellationsVisible}`;
+    if (state === lastState) return;
+    lastState = state;
     button.classList.toggle("constellation-toggle--waiting", !night);
     button.setAttribute("title", night ? TITLES.night : TITLES.day);
     button.setAttribute("aria-pressed", String(model.constellationsVisible));

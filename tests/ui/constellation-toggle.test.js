@@ -79,6 +79,29 @@ describe("bindConstellationToggle", () => {
     assert.equal(button.getAttribute("aria-pressed"), "true");
   });
 
+  it("leaves the DOM alone when sync runs again with nothing changed", () => {
+    const { button, model, binding } = setup();
+    binding.sync();
+    let writes = 0;
+    const setAttribute = button.setAttribute;
+    button.setAttribute = (...args) => {
+      writes += 1;
+      setAttribute(...args);
+    };
+    const toggleClass = button.classList.toggle;
+    button.classList.toggle = (...args) => {
+      writes += 1;
+      return toggleClass(...args);
+    };
+    binding.sync();
+    binding.sync();
+    assert.equal(writes, 0);
+    model.constellationsVisible = true;
+    binding.sync();
+    assert.ok(writes > 0);
+    assert.equal(button.getAttribute("aria-pressed"), "true");
+  });
+
   it("announces a spotted constellation in the live region", () => {
     const { announcer, binding } = setup();
     binding.announce("Big Dipper");
