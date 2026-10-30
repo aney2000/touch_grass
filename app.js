@@ -22,6 +22,7 @@ import { createTerrain } from "./src/three/terrain.js";
 import { createGrove, createTree } from "./src/three/tree.js";
 import { createGrass } from "./src/three/grass.js";
 import { createFireflyLights } from "./src/three/fireflies.js";
+import { createFallingParticles } from "./src/three/falling.js";
 import { createClockView } from "./src/ui/clock-view.js";
 import { bindDayNightToggle } from "./src/ui/day-night-toggle.js";
 import { bindZenMode } from "./src/ui/zen-mode.js";
@@ -54,6 +55,7 @@ const world = createWorld([
   createTree(),
   createGrass({ count: compact ? COUNTS.grassBladesCompact : COUNTS.grassBlades }),
   createFireflyLights({ capacity: COUNTS.fireflies }),
+  createFallingParticles({ capacity: compact ? 250 : 600 }),
 ]);
 
 let stage;
