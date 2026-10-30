@@ -19,6 +19,15 @@ describe("createTree", () => {
     assert.ok(Math.abs(y - terrainHeight(x, z)) < 1e-9);
   });
 
+  it("describes its deciduous canopy above the trunk for falling leaves", () => {
+    const tree = createTree();
+    const { x, y, z } = tree.object.position;
+    const { canopyVolume } = tree;
+    assert.equal(canopyVolume.species, "deciduous");
+    assert.deepEqual([canopyVolume.x, canopyVolume.z], [x, z]);
+    assert.ok(canopyVolume.y > y + 3 && canopyVolume.radius > 2);
+  });
+
   it("sways gently in the breeze, and stays still with reduced motion", () => {
     const tree = createTree();
     tree.update(frame({ seconds: 1.3 }));

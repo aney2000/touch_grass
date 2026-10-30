@@ -228,6 +228,13 @@ export function createTree() {
   return {
     object,
     canopy,
+    canopyVolume: {
+      x: crest.x,
+      y: crest.y + TRUNK_HEIGHT + 0.4,
+      z: crest.z,
+      radius: 3.6,
+      species: "deciduous",
+    },
     foliage,
     update({ seconds, atmosphere, season, motionScale = 1 }) {
       const sway = motionScale ? Math.sin(seconds * 0.7) * 0.035 * motionScale : 0;
