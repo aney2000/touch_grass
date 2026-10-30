@@ -52,6 +52,28 @@ follows the sky: noon at midday, midnight at the depth of night, running
 forward through the evening as night falls and through the morning as day
 returns.
 
+## Performance & devices
+
+- **Quality tiers** (`src/quality.js`): at startup the screen size, pixel
+  ratio, CPU cores, device memory, pointer type and reduced-motion preference
+  pick a `low`, `mid` or `high` tier. The tier sets grass blades
+  (18k / 36k / 60k), grove trees, falling particles, pixel ratio cap
+  (1.25 / 1.5 / 2), MSAA samples (0 / 2 / 4) and bloom resolution. Effective
+  pixels are clamped to about 8 MP; unknown hardware counts as mid-capable,
+  and reduced motion drops one tier.
+- **Frame governor** (`src/frame-governor.js`): if smoothed frame time stays
+  over 22 ms for 3 s, the app steps down a tier live (pixel ratio and bloom
+  scale only; geometry is not rebuilt), then waits 8 s before judging again.
+- **Idle cost**: rendering pauses while the tab is hidden; resizes are
+  coalesced into one frame and skipped when nothing changed; per-frame DOM
+  writes happen only on change.
+- **Touch & small screens**: drags on the canvas brush the grass (no scroll or
+  pull-to-refresh), safe-area insets apply under notches, tap targets are at
+  least 44 px, hover effects are limited to hover-capable pointers, and
+  portrait screens get a capped 70° field of view with the camera pulled back.
+  Layouts cover phones, tablets (601–1024 px), short landscape phones and
+  large (≥1920 px) screens.
+
 ## Getting started
 
 ```bash
