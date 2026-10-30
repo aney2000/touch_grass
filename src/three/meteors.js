@@ -7,6 +7,11 @@ import { shootingStarAt } from "../scene-math.js";
 const SKY_RADIUS = 600;
 const POOL_SIZE = 3;
 const MIN_DARKNESS = 0.62;
+// Rare enough to feel like a gift: a first one once the eye has adjusted, then
+// long, irregular waits.
+const FIRST_METEOR_MS = 6000;
+const MIN_GAP_MS = 15_000;
+const MAX_GAP_MS = 40_000;
 
 function skyPoint(azimuth, elevation, target) {
   const flat = Math.cos(elevation) * SKY_RADIUS;
@@ -44,7 +49,7 @@ export function createMeteorShower({ random = Math.random } = {}) {
   object.add(...pool);
 
   const active = [];
-  let nextAt = 0;
+  let nextAt = null;
   const head = new THREE.Vector3();
   const tail = new THREE.Vector3();
 
@@ -64,10 +69,12 @@ export function createMeteorShower({ random = Math.random } = {}) {
     active,
     update({ now, atmosphere, motionScale = 1 }) {
       if (motionScale < 1 || atmosphere.dayAmount < MIN_DARKNESS) {
-        nextAt = now + 1500;
+        nextAt = null;
+      } else if (nextAt === null) {
+        nextAt = now + FIRST_METEOR_MS;
       } else if (now >= nextAt && active.length < POOL_SIZE) {
         active.push(spawn(now));
-        nextAt = now + 2600 + random() * 4200;
+        nextAt = now + MIN_GAP_MS + random() * (MAX_GAP_MS - MIN_GAP_MS);
       }
 
       for (let i = active.length - 1; i >= 0; i -= 1) {
