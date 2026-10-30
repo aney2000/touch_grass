@@ -3,6 +3,13 @@ import assert from "node:assert/strict";
 import * as THREE from "three";
 import { createFallingParticles } from "../../src/three/falling.js";
 import { atmosphereAt } from "../../src/atmosphere.js";
+import { terrainHeight } from "../../src/terrain.js";
+
+const CANOPIES = Array.from({ length: 12 }, (_, i) => {
+  const x = -20 + i * 4;
+  const z = -60;
+  return { x, y: terrainHeight(x, z) + 5, z, radius: 2, species: "deciduous" };
+});
 
 const look = (particleRates) => ({ look: { particleRates } });
 const frame = (rates, overrides = {}) => ({
@@ -36,8 +43,27 @@ describe("createFallingParticles", () => {
     assert.equal(system.object.visible, false);
   });
 
-  it("instances falling leaves with moving matrices and colours", () => {
+  it("sizes its buffers from the per-kind limits", () => {
+    const system = createFallingParticles({ limits: { leaves: 30, petals: 30, snow: 50 } });
+    assert.equal(system.flakes.instanceMatrix.count, 30);
+    assert.equal(system.snow.geometry.attributes.position.count, 50);
+  });
+
+  it("sheds no leaves without trees", () => {
     const system = createFallingParticles({ capacity: 120 });
+    run(system, { ...NONE, leaves: 1 }, 30);
+    assert.equal(system.flakes.count, 0);
+  });
+
+  it("keeps distant leaves visible by growing them with camera distance", () => {
+    const system = createFallingParticles({ capacity: 60 });
+    const shader = system.flakes.material.vertexShader;
+    assert.match(shader, /cameraPosition/);
+    assert.ok(system.flakes.material.uniforms.uNearDistance.value > 0);
+  });
+
+  it("instances falling leaves with moving matrices and colours", () => {
+    const system = createFallingParticles({ capacity: 120, canopies: CANOPIES });
     run(system, { ...NONE, leaves: 0.7 }, 30);
     assert.equal(system.object.visible, true);
     assert.ok(system.flakes.count > 0);

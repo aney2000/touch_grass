@@ -2,17 +2,26 @@
 // quads, snow as soft round points. Motion comes from the pure simulation.
 
 import * as THREE from "three";
-import { createFallingField, stepFalling } from "../falling.js";
+import { createFallingField, stepFalling, fallingSpawners } from "../falling.js";
 
 const MAX_STEP_SEC = 0.1;
+// Leaves are real-sized (~0.15 m) within this distance of the camera.
+const NEAR_DISTANCE = 12;
 
+// Trees stand 40-125 m away, where a true-size leaf is far below a pixel. Each
+// quad is grown in proportion to its camera distance beyond NEAR_DISTANCE, so a
+// leaf keeps the screen size it would have at NEAR_DISTANCE: zonal emission
+// stays readable without a sorted transparent pass or a separate sprite path.
 const flakeVertex = /* glsl */ `
+  uniform float uNearDistance;
   varying vec2 vUv;
   varying vec3 vColor;
   void main() {
     vUv = uv;
     vColor = instanceColor;
-    gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0);
+    vec3 centre = (modelMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
+    float grow = max(1.0, distance(centre, cameraPosition) / uNearDistance);
+    gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position * grow, 1.0);
   }
 `;
 
@@ -49,17 +58,25 @@ const snowFragment = /* glsl */ `
   }
 `;
 
-export function createFallingParticles({ capacity = 600, seed = 913 } = {}) {
-  const field = createFallingField({ seed, capacity });
+export function createFallingParticles({ capacity, limits, canopies = [], seed = 913 } = {}) {
+  const flakeLimit = limits ? Math.max(limits.leaves ?? 0, limits.petals ?? 0) : capacity;
+  const snowLimit = limits ? (limits.snow ?? 0) : capacity;
+  const total = capacity ?? flakeLimit + snowLimit;
+  const field = createFallingField({
+    seed,
+    capacity: total,
+    limits,
+    spawners: fallingSpawners({ canopies }),
+  });
 
   const flakeGeometry = new THREE.PlaneGeometry(1, 1);
   const flakeMaterial = new THREE.ShaderMaterial({
     vertexShader: flakeVertex,
     fragmentShader: flakeFragment,
     side: THREE.DoubleSide,
-    uniforms: { uLight: { value: 1 } },
+    uniforms: { uLight: { value: 1 }, uNearDistance: { value: NEAR_DISTANCE } },
   });
-  const flakes = new THREE.InstancedMesh(flakeGeometry, flakeMaterial, capacity);
+  const flakes = new THREE.InstancedMesh(flakeGeometry, flakeMaterial, flakeLimit);
   flakes.name = "falling-flakes";
   flakes.frustumCulled = false;
   flakes.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -68,8 +85,8 @@ export function createFallingParticles({ capacity = 600, seed = 913 } = {}) {
   flakes.count = 0;
 
   const snowGeometry = new THREE.BufferGeometry();
-  const positions = new THREE.BufferAttribute(new Float32Array(capacity * 3), 3);
-  const sizes = new THREE.BufferAttribute(new Float32Array(capacity), 1);
+  const positions = new THREE.BufferAttribute(new Float32Array(snowLimit * 3), 3);
+  const sizes = new THREE.BufferAttribute(new Float32Array(snowLimit), 1);
   positions.setUsage(THREE.DynamicDrawUsage);
   sizes.setUsage(THREE.DynamicDrawUsage);
   snowGeometry.setAttribute("position", positions);
@@ -121,15 +138,18 @@ export function createFallingParticles({ capacity = 600, seed = 913 } = {}) {
       let snowCount = 0;
       for (const p of field.particles) {
         if (!p.alive) continue;
+        // Landed particles shrink away instead of alpha-fading: no sorting needed.
         if (p.kind === "snow") {
+          if (snowCount >= snowLimit) continue;
           positions.setXYZ(snowCount, p.x, p.y, p.z);
-          sizes.setX(snowCount, p.size);
+          sizes.setX(snowCount, p.size * p.fade);
           snowCount += 1;
           continue;
         }
+        if (flakeCount >= flakeLimit) continue;
         position.set(p.x, p.y, p.z);
         quaternion.setFromEuler(euler.set(p.rotation[0], p.rotation[1], p.rotation[2]));
-        scale.set(p.size * 0.7, p.size, p.size);
+        scale.set(p.size * 0.7 * p.fade, p.size * p.fade, p.size);
         flakes.setMatrixAt(flakeCount, matrix.compose(position, quaternion, scale));
         flakes.setColorAt(flakeCount, color.setRGB(p.color[0], p.color[1], p.color[2], "srgb"));
         flakeCount += 1;

@@ -1,7 +1,24 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { createFallingField, stepFalling, FALLING_AREA } from "../src/falling.js";
+import {
+  createFallingField as createField,
+  stepFalling,
+  fallingSpawners,
+  SNOW_AREA,
+} from "../src/falling.js";
 import { terrainHeight } from "../src/terrain.js";
+import { SEASON_LOOKS } from "../src/config.js";
+import { DRIFT_FACTOR, PER_TREE_RATE } from "../src/emitters.js";
+
+// A small grove: plenty of deciduous canopies so leaf/petal tests have emitters.
+const CANOPIES = Array.from({ length: 40 }, (_, i) => {
+  const x = -30 + (i % 10) * 7;
+  const z = -50 - Math.floor(i / 10) * 12;
+  const species = i % 5 === 4 ? "conifer" : "deciduous";
+  return { x, y: terrainHeight(x, z) + 5, z, radius: 2.2, species };
+});
+const createFallingField = (options) =>
+  createField({ spawners: fallingSpawners({ canopies: CANOPIES }), ...options });
 
 const NONE = { petals: 0, leaves: 0, snow: 0 };
 const run = (field, seconds, options, dt = 1 / 30) => {
@@ -66,19 +83,93 @@ describe("falling particles", () => {
     stepFalling(field, 0.2, { rates: NONE });
     assert.ok(p.y < y);
     p.y = terrainHeight(p.x, p.z) - 0.1;
-    stepFalling(field, 0.01, { rates: NONE });
+    run(field, 3, { rates: NONE });
     assert.equal(p.alive, false);
   });
 
-  it("stays within the area", () => {
+  it("keeps snow within its sky-wide volume", () => {
     const field = run(createFallingField({ seed: 5, capacity: 200 }), 5, {
-      rates: { petals: 1, leaves: 1, snow: 1 },
+      rates: { ...NONE, snow: 1 },
     });
     for (const p of alive(field)) {
-      assert.ok(p.x >= FALLING_AREA.xMin && p.x <= FALLING_AREA.xMax);
-      assert.ok(p.z <= FALLING_AREA.zMax && p.z >= FALLING_AREA.zMin);
-      assert.ok(p.y <= FALLING_AREA.yMax);
+      assert.ok(p.x >= SNOW_AREA.xMin && p.x <= SNOW_AREA.xMax);
+      assert.ok(p.z <= SNOW_AREA.zMax && p.z >= SNOW_AREA.zMin);
+      assert.ok(p.y <= SNOW_AREA.yMax);
     }
+  });
+
+  it("keeps leaves and petals in the drift zone of a deciduous tree", () => {
+    const field = run(createFallingField({ seed: 5, capacity: 400 }), 8, {
+      rates: { petals: 1, leaves: 1, snow: 0 },
+      wind: { gusts: new Float32Array([-30, -50, 0.1, 1]) },
+    });
+    const deciduous = CANOPIES.filter((c) => c.species === "deciduous");
+    assert.ok(field.aliveCount > 0);
+    for (const p of alive(field)) {
+      const near = deciduous.some(
+        (c) => Math.hypot(c.x - p.x, c.z - p.z) <= c.radius * DRIFT_FACTOR + 1e-9,
+      );
+      assert.ok(near, `${p.kind} at ${p.x},${p.z}`);
+    }
+  });
+
+  it("sheds no leaves without deciduous trees", () => {
+    const conifers = CANOPIES.map((c) => ({ ...c, species: "conifer" }));
+    const field = run(
+      createField({ seed: 1, capacity: 100, spawners: fallingSpawners({ canopies: conifers }) }),
+      3,
+      { rates: { petals: 1, leaves: 1, snow: 0 } },
+    );
+    assert.equal(field.aliveCount, 0);
+  });
+
+  it("bounds the emission per tree so totals scale with the forest", () => {
+    const count = (canopies) => {
+      const field = createField({
+        seed: 2,
+        capacity: 2000,
+        spawners: fallingSpawners({ canopies }),
+      });
+      for (let i = 0; i < 30; i += 1) stepFalling(field, 1 / 30, { rates: { ...NONE, leaves: 1 } });
+      return field.spawned.leaves;
+    };
+    const few = count(CANOPIES.slice(0, 4));
+    const many = count(CANOPIES);
+    assert.ok(few <= 4 * PER_TREE_RATE + 1, `${few}`);
+    assert.ok(many > few * 5, `${many} vs ${few}`);
+  });
+
+  it("stays empty all summer", () => {
+    assert.deepEqual({ ...SEASON_LOOKS.summer.particleRates }, NONE);
+    const field = run(createFallingField({ seed: 1, capacity: 100 }), 3, {
+      rates: SEASON_LOOKS.summer.particleRates,
+    });
+    assert.equal(field.aliveCount, 0);
+  });
+
+  it("caps each kind at its own limit", () => {
+    const field = run(createFallingField({ seed: 1, capacity: 300, limits: { snow: 20 } }), 4, {
+      rates: { ...NONE, snow: 1 },
+    });
+    assert.equal(field.aliveCount, 20);
+  });
+
+  it("lets a landed leaf lie briefly on the ground, fading, before recycling", () => {
+    const field = run(createFallingField({ seed: 3, capacity: 40 }), 0.5, {
+      rates: { ...NONE, leaves: 1 },
+    });
+    const p = alive(field)[0];
+    p.y = terrainHeight(p.x, p.z) - 0.1;
+    stepFalling(field, 0.05, { rates: NONE });
+    assert.equal(p.alive, true);
+    assert.ok(Math.abs(p.y - terrainHeight(p.x, p.z)) < 0.05);
+    stepFalling(field, 0.5, { rates: NONE });
+    assert.ok(p.fade < 1 && p.fade > 0);
+    const x = p.x;
+    stepFalling(field, 0.3, { rates: NONE });
+    assert.equal(p.x, x);
+    stepFalling(field, 1.2, { rates: NONE });
+    assert.equal(p.alive, false);
   });
 
   it("slows with reduced motion", () => {
