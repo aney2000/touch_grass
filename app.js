@@ -192,6 +192,7 @@ function frame(now) {
   clockView.render(model.clock());
   zenMode.update(now);
   constellationToggle.sync();
+  constellationToggle.update();
 }
 
 // One switch silences every single-key shortcut (WCAG 2.1.4).
@@ -244,6 +245,7 @@ bindSeasonPicker({
 const constellationToggle = bindConstellationToggle({
   button: document.querySelector("#constellation-toggle"),
   announcer: document.querySelector("#constellation-status"),
+  caption: document.querySelector("#constellation-caption"),
   model,
   keyTarget: window,
   shortcuts,

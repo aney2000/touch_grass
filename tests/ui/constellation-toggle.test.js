@@ -4,7 +4,8 @@ import { bindConstellationToggle } from "../../src/ui/constellation-toggle.js";
 import { fakeElement, keydown } from "./fakes.js";
 import { createShortcutGate } from "../../src/ui/shortcuts.js";
 
-function setup({ night = true, shortcuts } = {}) {
+function setup({ night = true, shortcuts, caption } = {}) {
+  let clock = 42;
   const button = fakeElement();
   const announcer = fakeElement();
   const keyTarget = new EventTarget();
@@ -27,14 +28,18 @@ function setup({ night = true, shortcuts } = {}) {
     announcer,
     model,
     keyTarget,
-    now: () => 42,
+    now: () => clock,
     shortcuts,
+    caption,
     bringNight: () => {
       nightfalls.push(true);
       model.isNight = true;
     },
   });
-  return { button, announcer, keyTarget, model, nightfalls, binding };
+  const setClock = (time) => {
+    clock = time;
+  };
+  return { button, announcer, keyTarget, model, nightfalls, binding, setClock };
 }
 
 describe("bindConstellationToggle", () => {
@@ -72,7 +77,7 @@ describe("bindConstellationToggle", () => {
     const { button, model, binding } = setup({ night: false });
     binding.sync();
     assert.ok(button.classList.contains("constellation-toggle--waiting"));
-    assert.equal(button.getAttribute("title"), "Wait for night to spot constellations");
+    assert.equal(button.getAttribute("title"), "See the stars tonight (C)");
     model.isNight = true;
     binding.sync();
     assert.equal(button.classList.contains("constellation-toggle--waiting"), false);
@@ -85,6 +90,38 @@ describe("bindConstellationToggle", () => {
     assert.equal(nightfalls.length, 1);
     assert.equal(model.constellationsVisible, true);
     assert.equal(button.getAttribute("aria-pressed"), "true");
+  });
+
+  it("shows only the pressed state, not the waiting dim, when day returns while on", () => {
+    const { button, model, binding } = setup();
+    button.click();
+    model.isNight = false;
+    binding.sync();
+    assert.equal(button.getAttribute("aria-pressed"), "true");
+    assert.equal(button.classList.contains("constellation-toggle--waiting"), false);
+  });
+
+  it("captions a spotted constellation, then hides the caption after 3 s of frames", () => {
+    const caption = fakeElement();
+    caption.hidden = true;
+    const { binding, setClock } = setup({ caption });
+    binding.announce("Orion");
+    assert.equal(caption.textContent, "Orion");
+    assert.equal(caption.hidden, false);
+    assert.ok(caption.classList.contains("constellation-caption--visible"));
+    setClock(42 + 2_999);
+    binding.update();
+    assert.ok(caption.classList.contains("constellation-caption--visible"));
+    setClock(42 + 3_000);
+    binding.update();
+    assert.equal(caption.classList.contains("constellation-caption--visible"), false);
+  });
+
+  it("names the Big Dipper with its article in the caption", () => {
+    const caption = fakeElement();
+    const { binding } = setup({ caption });
+    binding.announce("Big Dipper");
+    assert.equal(caption.textContent, "The Big Dipper");
   });
 
   it("leaves the DOM alone when sync runs again with nothing changed", () => {

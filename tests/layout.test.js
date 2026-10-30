@@ -145,6 +145,26 @@ describe("hint placement", () => {
   });
 });
 
+describe("constellation caption", () => {
+  it("sits with the clock in the footer, hidden until a constellation is spotted", () => {
+    const footer = elementBlock(/<footer class="scene-controls"/, "footer");
+    assert.match(
+      footer,
+      /<p class="constellation-caption" id="constellation-caption" aria-hidden="true" hidden><\/p>/,
+    );
+  });
+
+  it("is a quiet Georgia italic line that fades in over 600ms", () => {
+    const body = ruleBody(".constellation-caption");
+    assert.match(body, /font-family:\s*Georgia/);
+    assert.match(body, /font-style:\s*italic/);
+    assert.match(body, /font-size:\s*15px/);
+    assert.match(body, /transition:\s*opacity 600ms/);
+    const visible = ruleBody(".constellation-caption--visible");
+    assert.match(visible, /opacity:\s*0\.7/);
+  });
+});
+
 describe("constellation waiting state", () => {
   it("dims only the icon, never the whole button", () => {
     assert.doesNotMatch(ruleBody(".constellation-toggle--waiting"), /opacity/);
