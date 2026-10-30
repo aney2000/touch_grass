@@ -27,6 +27,23 @@ appear, and fireflies blink to life.
   camera calm down, meteors stay away, and the transition is quicker.
 - **Graceful fallback** — without WebGL, a CSS rendition of the field remains.
 
+## Controls
+
+The controls sit in a dock at the bottom-left, next to the clock, clear of the
+hosting badge in the bottom-right corner.
+
+| Control       | Shortcut                      | What it does                                                          |
+| ------------- | ----------------------------- | --------------------------------------------------------------------- |
+| Brush / swipe | —                             | Parts the grass under the pointer; brisk swipes and taps send ripples |
+| Day / night   | <kbd>N</kbd>                  | Lets night fall or morning in                                         |
+| Zen           | <kbd>Z</kbd>                  | Hides all text and controls for one minute, with a small countdown    |
+| Leave zen     | <kbd>Esc</kbd> / <kbd>Z</kbd> | Brings everything back early (or click the countdown)                 |
+
+Shortcuts ignore modifier keys and keystrokes typed into fields. The clock
+follows the sky: noon at midday, midnight at the depth of night, running
+forward through the evening as night falls and through the morning as day
+returns.
+
 ## Getting started
 
 ```bash
@@ -71,6 +88,12 @@ src/
   camera-rig.js       Camera drift, parallax, and portrait FOV
   scene.js            Scene model: state, lifecycle, per-frame snapshot
   input.js            Pointer controller: parallax, touch, and gusts
+  zen.js              Zen mode timer and countdown formatting
+  ui/
+    shortcuts.js      Single-key shortcuts that ignore modifiers and typing
+    clock-view.js     Renders the clock as text
+    day-night-toggle.js  Day/night button and N shortcut
+    zen-mode.js       Zen button, countdown pill, and Z / Escape shortcuts
   three/
     world.js          Ordered pipeline of scene systems
     stage.js          WebGL renderer, bloom, and tone mapping
@@ -86,6 +109,7 @@ src/
 tests/
   *.test.js           Pure model tests
   three/*.test.js     Headless tests for the three.js systems
+  ui/*.test.js        DOM bindings, tested with tiny element fakes
 ```
 
 ## How it works
