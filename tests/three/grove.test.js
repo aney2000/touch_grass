@@ -73,4 +73,27 @@ describe("createGrove", () => {
     grove.update(frame(SUMMER, { atmosphere: atmosphereAt(1) }));
     assert.ok(grove.foliage.color.getHSL({}).l < day);
   });
+
+  it("re-uploads canopy instances only when the look changes", () => {
+    const grove = createGrove({ count: 18 });
+    const summer = frame(SUMMER);
+    grove.update(summer);
+    const version = grove.canopy.instanceMatrix.version;
+    grove.update(summer);
+    grove.update(frame(SUMMER));
+    assert.equal(grove.canopy.instanceMatrix.version, version);
+    grove.update(frame(2.5));
+    assert.ok(grove.canopy.instanceMatrix.version > version);
+  });
+
+  it("skips night tint work while the day amount is unchanged", () => {
+    const grove = createGrove({ count: 18 });
+    const summer = frame(SUMMER);
+    grove.update(summer);
+    grove.foliage.color.set(0, 0, 0);
+    grove.update(summer);
+    assert.equal(grove.foliage.color.getHex(), 0);
+    grove.update(frame(SUMMER, { atmosphere: atmosphereAt(0.5) }));
+    assert.notEqual(grove.foliage.color.getHex(), 0);
+  });
 });

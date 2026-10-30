@@ -126,6 +126,8 @@ export function createGrove({ count = 22, seed = 2207 } = {}) {
   object.add(trunks, branches, canopy);
 
   let lastKey = "";
+  let lastLook = null;
+  let lastDayAmount = NaN;
   return {
     object,
     trunks,
@@ -134,19 +136,27 @@ export function createGrove({ count = 22, seed = 2207 } = {}) {
     foliage,
     update({ atmosphere, season }) {
       const look = season?.look?.foliage ?? DEFAULT_FOLIAGE;
-      const key = `${look.color.join()}|${look.density}|${look.blossom}`;
-      if (key !== lastKey) {
-        lastKey = key;
-        canopy.visible = look.density > 0.04;
-        branches.visible = look.density < 0.7;
-        if (canopy.visible) {
-          placeCanopy(0.15 + 0.85 * look.density);
-          paintCanopy(look);
+      // The scene reuses its look object while the season rests, so identity
+      // skips the string key (and its allocation) on almost every frame.
+      if (look !== lastLook) {
+        lastLook = look;
+        const key = `${look.color.join()}|${look.density}|${look.blossom}`;
+        if (key !== lastKey) {
+          lastKey = key;
+          canopy.visible = look.density > 0.04;
+          branches.visible = look.density < 0.7;
+          if (canopy.visible) {
+            placeCanopy(0.15 + 0.85 * look.density);
+            paintCanopy(look);
+          }
         }
       }
-      // Instance colours carry the season; the material tint carries the night.
-      setSrgb(foliage.color, mixRgb(WHITE, NIGHT_TINT, atmosphere.dayAmount));
-      setSrgb(bark.color, mixRgb(BARK_DAY, BARK_NIGHT, atmosphere.dayAmount));
+      if (atmosphere.dayAmount !== lastDayAmount) {
+        lastDayAmount = atmosphere.dayAmount;
+        // Instance colours carry the season; the material tint carries the night.
+        setSrgb(foliage.color, mixRgb(WHITE, NIGHT_TINT, atmosphere.dayAmount));
+        setSrgb(bark.color, mixRgb(BARK_DAY, BARK_NIGHT, atmosphere.dayAmount));
+      }
     },
     dispose() {
       trunkGeometry.dispose();
