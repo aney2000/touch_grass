@@ -171,6 +171,12 @@ describe("Scene seasons", () => {
     assert.deepEqual(season.look, seasonLook(seasonBlendAt(1)));
   });
 
+  it("lets a season morph unfold slowly, gentler than day/night", () => {
+    assert.ok(SEASON_MS >= 6500 && SEASON_MS <= 8000);
+    assert.ok(SEASON_MS > DAY_NIGHT_MS);
+    assert.ok(REDUCED_MOTION_SEASON_MS >= 1100 && REDUCED_MOTION_SEASON_MS <= 1500);
+  });
+
   it("morphs to a new season over SEASON_MS, blending both on the way", () => {
     const scene = new Scene();
     scene.advance(0);
