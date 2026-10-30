@@ -25,6 +25,12 @@ appear, and fireflies blink to life.
   pointer; the field of view widens on portrait screens.
 - **Respects `prefers-reduced-motion`** — wind, clouds, fireflies, and the
   camera calm down, meteors stay away, and the transition is quicker.
+- **Spot the constellations** — on a starry night the Big Dipper, Little
+  Dipper (with Polaris), Cassiopeia and Orion shine a little brighter, placed
+  from real star coordinates so the Merak → Dubhe pointer leads to the pole
+  star. Press <kbd>C</kbd> to fade in their lines and names, or tap a
+  constellation star to outline it for a few seconds; screen readers hear
+  which one you spotted.
 - **Graceful fallback** — without WebGL, a CSS rendition of the field remains.
 
 ## Controls
@@ -32,13 +38,14 @@ appear, and fireflies blink to life.
 The controls sit in a dock at the bottom-left, next to the clock, clear of the
 hosting badge in the bottom-right corner.
 
-| Control       | Shortcut                      | What it does                                                          |
-| ------------- | ----------------------------- | --------------------------------------------------------------------- |
-| Brush / swipe | —                             | Parts the grass under the pointer; brisk swipes and taps send ripples |
-| Day / night   | <kbd>N</kbd>                  | Lets night fall or morning in                                         |
-| Seasons       | <kbd>1</kbd>–<kbd>4</kbd>     | Morphs the meadow to spring, summer, autumn or winter                 |
-| Zen           | <kbd>Z</kbd>                  | Hides all text and controls for one minute, with a small countdown    |
-| Leave zen     | <kbd>Esc</kbd> / <kbd>Z</kbd> | Brings everything back early (or click the countdown)                 |
+| Control        | Shortcut                      | What it does                                                          |
+| -------------- | ----------------------------- | --------------------------------------------------------------------- |
+| Brush / swipe  | —                             | Parts the grass under the pointer; brisk swipes and taps send ripples |
+| Day / night    | <kbd>N</kbd>                  | Lets night fall or morning in                                         |
+| Seasons        | <kbd>1</kbd>–<kbd>4</kbd>     | Morphs the meadow to spring, summer, autumn or winter                 |
+| Constellations | <kbd>C</kbd>                  | Outlines and names the constellations (lets night fall first by day)  |
+| Zen            | <kbd>Z</kbd>                  | Hides all text and controls for one minute, with a small countdown    |
+| Leave zen      | <kbd>Esc</kbd> / <kbd>Z</kbd> | Brings everything back early (or click the countdown)                 |
 
 Shortcuts ignore modifier keys and keystrokes typed into fields. The clock
 follows the sky: noon at midday, midnight at the depth of night, running
