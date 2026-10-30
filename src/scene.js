@@ -45,6 +45,9 @@ const SEASON_BREEZE = Object.freeze([
   { x: 5, z: -14, strength: 0.35 },
 ]);
 
+// Rapid season picks share one breeze rather than stacking a gale.
+const SEASON_BREEZE_COOLDOWN_MS = 1500;
+
 const CONSTELLATION_REVEAL_MS = 900;
 const HIGHLIGHT_HOLD_MS = 6000;
 
@@ -163,7 +166,8 @@ export class Scene {
   // runs linearly; the choreography eases each channel in its own window.
   setSeason(name, now) {
     const target = nearestSeasonTarget(this.seasonPositionValue, name);
-    if (target !== this.seasonPositionValue) {
+    const settled = now - this.seasonStartedAt >= SEASON_BREEZE_COOLDOWN_MS;
+    if (target !== this.seasonPositionValue && settled && !this.prefersReducedMotion) {
       for (const { strength, ...point } of SEASON_BREEZE) this.pushGust(point, strength, now);
     }
     this.targetSeason = name;

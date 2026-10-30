@@ -142,6 +142,37 @@ describe("Scene", () => {
     );
   });
 
+  function activeGusts(scene) {
+    return [3, 7, 11, 15].filter((index) => scene.frame().wind.gusts[index] > 0).length;
+  }
+
+  it("does not stack breezes when seasons are changed in quick succession", () => {
+    const scene = new Scene();
+    scene.advance(0);
+    scene.setSeason("autumn", 0);
+    scene.setSeason("winter", 600);
+    scene.setSeason("spring", 1200);
+    scene.advance(1216);
+    assert.equal(activeGusts(scene), 2, "only the first change's breeze");
+  });
+
+  it("sends a fresh breeze once the last season change has had time to settle", () => {
+    const scene = new Scene();
+    scene.advance(0);
+    scene.setSeason("autumn", 0);
+    scene.setSeason("winter", 1600);
+    scene.advance(1616);
+    assert.ok(activeGusts(scene) > 2);
+  });
+
+  it("keeps the meadow still on a season change when reduced motion is preferred", () => {
+    const scene = new Scene({ prefersReducedMotion: true });
+    scene.advance(0);
+    scene.setSeason("autumn", 0);
+    scene.advance(16);
+    assert.equal(activeGusts(scene), 0);
+  });
+
   it("stays still when the chosen season is already showing", () => {
     const scene = new Scene();
     scene.advance(0);
