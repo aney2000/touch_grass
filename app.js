@@ -18,6 +18,8 @@ import { createSky } from "./src/three/sky.js";
 import { createLights } from "./src/three/lights.js";
 import { createCloudLayer } from "./src/three/clouds.js";
 import { createMeteorShower } from "./src/three/meteors.js";
+import { createBirds } from "./src/three/birds.js";
+import { birdsForTier } from "./src/birds.js";
 import { createTerrain } from "./src/three/terrain.js";
 import { createGrove, createTree } from "./src/three/tree.js";
 import { createGrass } from "./src/three/grass.js";
@@ -71,6 +73,7 @@ const world = createWorld([
   createTerrain(),
   grove,
   heroTree,
+  createBirds({ canopies, maxBirds: birdsForTier(quality.tier) }),
   createGrass({ count: quality.grassBlades }),
   createFireflyLights({ capacity: COUNTS.fireflies }),
   createFallingParticles({
