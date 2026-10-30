@@ -22,6 +22,7 @@ import { createTerrain } from "./src/three/terrain.js";
 import { createTree } from "./src/three/tree.js";
 import { createGrass } from "./src/three/grass.js";
 import { createFireflyLights } from "./src/three/fireflies.js";
+import { createClockView } from "./src/ui/clock-view.js";
 
 const COMPACT_SCREEN_PX = 700;
 const MAX_PIXEL_RATIO = 1.75;
@@ -30,7 +31,10 @@ const sceneElement = document.querySelector(".scene");
 const canvas = document.querySelector("#meadow");
 const toggle = document.querySelector("#scene-toggle");
 const toggleLabel = document.querySelector(".scene-toggle__label");
-const clock = document.querySelector("#scene-clock");
+const clockView = createClockView({
+  timeElement: document.querySelector(".scene-clock__time"),
+  meridiemElement: document.querySelector(".scene-clock__meridiem"),
+});
 const themeColor = document.querySelector('meta[name="theme-color"]');
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -61,7 +65,6 @@ try {
 createPointerInput({ canvas, sceneElement, model, pick: createGroundPicker(camera) });
 
 let pixelRatio = 1;
-let lastClockKey = "";
 
 function resize() {
   const bounds = sceneElement.getBoundingClientRect();
@@ -70,14 +73,6 @@ function resize() {
   pixelRatio = Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO);
   resizeCamera(camera, width, height);
   stage?.resize(width, height, pixelRatio);
-}
-
-function updateClock() {
-  const { hours12, minutes, meridiem } = model.clock();
-  const key = `${hours12}:${minutes}${meridiem}`;
-  if (key === lastClockKey) return;
-  lastClockKey = key;
-  clock.innerHTML = `${hours12}:${minutes} <span>${meridiem}</span>`;
 }
 
 function updateThemeColor() {
@@ -99,7 +94,7 @@ function frame(now = 0) {
   world.update(snapshot);
   stage?.render(snapshot.atmosphere);
   updateThemeColor();
-  updateClock();
+  clockView.render(model.clock());
   window.requestAnimationFrame(frame);
 }
 

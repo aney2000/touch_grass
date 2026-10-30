@@ -162,7 +162,7 @@ a {
   text-shadow: 0 1px 8px rgb(20 56 40 / 24%);
 }
 
-.scene-clock span {
+.scene-clock__meridiem {
   margin-left: 3px;
   font-family: "Trebuchet MS", sans-serif;
   font-size: 10px;
