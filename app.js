@@ -23,6 +23,8 @@ import { birdsForTier } from "./src/birds.js";
 import { createTerrain } from "./src/three/terrain.js";
 import { createGrove, createTree } from "./src/three/tree.js";
 import { createGrass } from "./src/three/grass.js";
+import { createGrasshoppers } from "./src/three/grasshoppers.js";
+import { grasshopperCapacity } from "./src/grasshoppers.js";
 import { createFireflyLights } from "./src/three/fireflies.js";
 import { createFallingParticles } from "./src/three/falling.js";
 import { createClockView } from "./src/ui/clock-view.js";
@@ -75,6 +77,7 @@ const world = createWorld([
   heroTree,
   createBirds({ canopies, maxBirds: birdsForTier(quality.tier) }),
   createGrass({ count: quality.grassBlades }),
+  createGrasshoppers({ capacity: grasshopperCapacity(quality.tier) }),
   createFireflyLights({ capacity: COUNTS.fireflies }),
   createFallingParticles({
     canopies,

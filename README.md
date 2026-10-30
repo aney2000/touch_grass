@@ -75,6 +75,12 @@ appear, and fireflies blink to life.
   echelon. Reduced motion slows the flight. At most 4 / 6 / 8 birds by tier
   (`src/birds.js`, `src/three/birds.js`); like leaves, the dark silhouettes grow
   with camera distance (`src/three/screen-size.js`) and fade into the haze.
+- **Grasshoppers** — in summer, sweeping the hand through the grass sometimes
+  flushes 1–3 grasshoppers nearby. Each makes a ballistic hop away from the
+  hand with a brief orange wing flash, maybe one or two smaller hops, then
+  vanishes into the grass. Mostly by day, rarer at dusk and in spring/autumn,
+  never at night or in winter, with a cooldown between flushes. At most
+  4 / 6 / 8 by tier (`src/grasshoppers.js`, `src/three/grasshoppers.js`).
 
 ## Controls
 
