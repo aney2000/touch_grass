@@ -6,6 +6,11 @@ import { createZenTimer, formatCountdown } from "../zen.js";
 import { createShortcutGate, matchesShortcut } from "./shortcuts.js";
 
 const ZEN_CLASS = "scene--zen";
+// The pill steps back once the visitor has settled, then returns for the final
+// seconds so the end of the spell is never a surprise.
+const QUIET_CLASS = "zen-countdown--quiet";
+const QUIET_AFTER_MS = 4_000;
+const LOUD_FINAL_MS = 5_000;
 const MESSAGES = { start: "Zen mode for 1 minute", end: "Zen mode ended" };
 
 export function bindZenMode({
@@ -23,12 +28,21 @@ export function bindZenMode({
   let lastText = "";
   let lastProgress = "";
 
+  let quiet = false;
+  function setQuiet(on) {
+    if (on === quiet) return;
+    quiet = on;
+    countdown.classList.toggle(QUIET_CLASS, on);
+  }
+
   function render(time) {
-    const text = formatCountdown(timer.remainingMs(time));
+    const remaining = timer.remainingMs(time);
+    const text = formatCountdown(remaining);
     if (text !== lastText) {
       lastText = text;
       countdownText.textContent = text;
     }
+    setQuiet(timer.durationMs - remaining >= QUIET_AFTER_MS && remaining > LOUD_FINAL_MS);
     const progress = String(Math.round(timer.progress(time) * 1000) / 1000);
     if (progress !== lastProgress) {
       lastProgress = progress;
@@ -55,6 +69,7 @@ export function bindZenMode({
   function exit() {
     if (!active) return;
     timer.stop();
+    setQuiet(false);
     setActive(false);
     button.focus();
   }

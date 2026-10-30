@@ -5,6 +5,30 @@ import { createZenTimer } from "../../src/zen.js";
 import { fakeElement, keydown } from "./fakes.js";
 import { createShortcutGate } from "../../src/ui/shortcuts.js";
 
+describe("bindZenMode quiet countdown", () => {
+  const QUIET = "zen-countdown--quiet";
+
+  it("goes quiet 4 s in and speaks up again for the last 5 s", () => {
+    const { button, countdown, advanceTo } = setup();
+    button.click();
+    assert.equal(countdown.classList.contains(QUIET), false);
+    advanceTo(1_000 + 3_999);
+    assert.equal(countdown.classList.contains(QUIET), false);
+    advanceTo(1_000 + 4_000);
+    assert.ok(countdown.classList.contains(QUIET));
+    advanceTo(1_000 + 55_000);
+    assert.equal(countdown.classList.contains(QUIET), false);
+  });
+
+  it("starts loud again on the next visit", () => {
+    const { button, countdown, advanceTo, zen } = setup();
+    button.click();
+    advanceTo(10_000);
+    zen.exit();
+    assert.equal(countdown.classList.contains(QUIET), false);
+  });
+});
+
 describe("bindZenMode shortcut gate", () => {
   it("ignores Z while shortcuts are off, but Escape still leaves zen", () => {
     const shortcuts = createShortcutGate({ enabled: false });
