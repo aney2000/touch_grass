@@ -24,8 +24,16 @@ function elementBlock(openingPattern, tag) {
 }
 
 describe("scene control dock", () => {
-  it("groups the scene buttons in a labelled toolbar", () => {
-    assert.match(html, /<div class="scene-dock" role="toolbar" aria-label="Scene controls"/);
+  it("groups the scene buttons in a labelled group (no toolbar: buttons keep their tab stops)", () => {
+    assert.match(html, /<div class="scene-dock" role="group" aria-label="Scene controls"/);
+    assert.doesNotMatch(html, /role="toolbar"/);
+  });
+
+  it("gives the day/night button an action label without pressed state or inner live region", () => {
+    const button = html.match(/<button[^>]*id="scene-toggle"[\s\S]*?<\/button>/)[0];
+    assert.doesNotMatch(button, /aria-pressed/);
+    assert.doesNotMatch(button, /aria-live/);
+    assert.match(html, /<p class="sr-only" id="day-night-status" aria-live="polite"><\/p>/);
   });
 
   it("holds the day/night toggle as a dock button", () => {

@@ -50,15 +50,10 @@
           <span class="scene-clock__meridiem">PM</span>
         </p>
         <p class="constellation-caption" id="constellation-caption" aria-hidden="true" hidden></p>
-        <div class="scene-dock" role="toolbar" aria-label="Scene controls">
-          <button
-            class="dock-button scene-toggle"
-            id="scene-toggle"
-            type="button"
-            aria-pressed="false"
-          >
+        <div class="scene-dock" role="group" aria-label="Scene controls">
+          <button class="dock-button scene-toggle" id="scene-toggle" type="button">
             <span class="scene-toggle__icon" aria-hidden="true"></span>
-            <span class="scene-toggle__label" aria-live="polite">Let night fall</span>
+            <span class="scene-toggle__label">Let night fall</span>
           </button>
           <button
             class="dock-button zen-toggle"
@@ -163,6 +158,7 @@
         <span class="zen-countdown__ring" aria-hidden="true"></span>
         <span class="zen-countdown__time" aria-hidden="true">1:00</span>
       </button>
+      <p class="sr-only" id="day-night-status" aria-live="polite"></p>
       <p class="sr-only" id="zen-status" aria-live="polite"></p>
       <p class="sr-only" id="season-status" aria-live="polite"></p>
       <p class="sr-only" id="constellation-status" aria-live="polite"></p>

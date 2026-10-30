@@ -214,6 +214,7 @@ bindShortcutToggle({
 const dayNight = bindDayNightToggle({
   button: document.querySelector("#scene-toggle"),
   label: document.querySelector(".scene-toggle__label"),
+  announcer: document.querySelector("#day-night-status"),
   sceneElement,
   model,
   keyTarget: window,

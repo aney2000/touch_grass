@@ -18,8 +18,8 @@ describe("bindDayNightToggle shortcut gate", () => {
 
 function setup({ shortcuts } = {}) {
   const button = fakeElement();
-  button.setAttribute("aria-pressed", "false");
   const label = fakeElement({ text: "Let night fall" });
+  const announcer = fakeElement();
   const sceneElement = fakeElement();
   const keyTarget = new EventTarget();
   const toggles = [];
@@ -34,31 +34,38 @@ function setup({ shortcuts } = {}) {
   const binding = bindDayNightToggle({
     button,
     label,
+    announcer,
     sceneElement,
     model,
     keyTarget,
     now: () => 777,
     shortcuts,
   });
-  return { button, label, sceneElement, keyTarget, toggles, binding };
+  return { button, label, announcer, sceneElement, keyTarget, toggles, binding };
 }
 
 describe("bindDayNightToggle", () => {
-  it("lets night fall on click: pressed state, inviting label and night styling", () => {
-    const { button, label, sceneElement } = setup();
+  it("lets night fall on click: action label, night styling and a status line", () => {
+    const { button, label, sceneElement, announcer } = setup();
     button.click();
-    assert.equal(button.getAttribute("aria-pressed"), "true");
     assert.equal(label.textContent, "Let morning in");
     assert.ok(sceneElement.classList.contains("scene--night"));
+    assert.equal(announcer.textContent, "Night falls");
   });
 
   it("lets morning back in on a second click", () => {
-    const { button, label, sceneElement } = setup();
+    const { button, label, sceneElement, announcer } = setup();
     button.click();
     button.click();
-    assert.equal(button.getAttribute("aria-pressed"), "false");
     assert.equal(label.textContent, "Let night fall");
     assert.ok(!sceneElement.classList.contains("scene--night"));
+    assert.equal(announcer.textContent, "Morning comes");
+  });
+
+  it("names the action in its label, so it carries no pressed state", () => {
+    const { button } = setup();
+    button.click();
+    assert.equal(button.hasAttribute("aria-pressed"), false);
   });
 
   it("starts the transition on the shared frame clock", () => {
