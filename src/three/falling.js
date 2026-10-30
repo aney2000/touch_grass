@@ -64,6 +64,7 @@ export function createFallingParticles({ capacity = 600, seed = 913 } = {}) {
   flakes.frustumCulled = false;
   flakes.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   flakes.setColorAt(0, new THREE.Color(1, 1, 1));
+  flakes.instanceColor.setUsage(THREE.DynamicDrawUsage);
   flakes.count = 0;
 
   const snowGeometry = new THREE.BufferGeometry();
@@ -110,6 +111,12 @@ export function createFallingParticles({ capacity = 600, seed = 913 } = {}) {
       lastSeconds = seconds;
       stepFalling(field, dt, { rates, wind, motionScale });
 
+      // Idle: nothing alive and already drawn empty, so skip the loop and uploads.
+      if (field.aliveCount === 0 && flakes.count === 0 && snowGeometry.drawRange.count === 0) {
+        object.visible = false;
+        return;
+      }
+
       let flakeCount = 0;
       let snowCount = 0;
       for (const p of field.particles) {
@@ -127,12 +134,25 @@ export function createFallingParticles({ capacity = 600, seed = 913 } = {}) {
         flakes.setColorAt(flakeCount, color.setRGB(p.color[0], p.color[1], p.color[2], "srgb"));
         flakeCount += 1;
       }
+      // Upload only the buffers that hold live instances; updateRanges trim to them.
+      if (flakeCount > 0) {
+        flakes.instanceMatrix.clearUpdateRanges();
+        flakes.instanceMatrix.addUpdateRange(0, flakeCount * 16);
+        flakes.instanceMatrix.needsUpdate = true;
+        flakes.instanceColor.clearUpdateRanges();
+        flakes.instanceColor.addUpdateRange(0, flakeCount * 3);
+        flakes.instanceColor.needsUpdate = true;
+      }
       flakes.count = flakeCount;
-      flakes.instanceMatrix.needsUpdate = true;
-      flakes.instanceColor.needsUpdate = true;
+      if (snowCount > 0) {
+        positions.clearUpdateRanges();
+        positions.addUpdateRange(0, snowCount * 3);
+        positions.needsUpdate = true;
+        sizes.clearUpdateRanges();
+        sizes.addUpdateRange(0, snowCount);
+        sizes.needsUpdate = true;
+      }
       snowGeometry.setDrawRange(0, snowCount);
-      positions.needsUpdate = true;
-      sizes.needsUpdate = true;
 
       // Dim toward night like the rest of the lit scene.
       const light = atmosphere ? 0.35 + 0.65 * Math.min(1, atmosphere.ambientIntensity / 0.95) : 1;

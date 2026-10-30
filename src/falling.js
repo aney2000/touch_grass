@@ -48,8 +48,11 @@ export function createFallingField({ seed, capacity, area = FALLING_AREA }) {
     particles,
     pending: { petals: 0, leaves: 0, snow: 0 },
     time: 0,
+    aliveCount: 0,
   };
 }
+
+const NO_RATES = Object.freeze({});
 
 function spawn(field, particle, kind) {
   const { random, area } = field;
@@ -63,11 +66,18 @@ function spawn(field, particle, kind) {
   particle.vx = (random() - 0.5) * 0.3;
   particle.vy = -physics.fall * (0.75 + random() * 0.5);
   particle.vz = (random() - 0.5) * 0.3;
-  particle.rotation = [random() * Math.PI * 2, random() * Math.PI * 2, random() * Math.PI * 2];
+  // Reuse the particle's arrays: spawning happens in the frame loop.
+  particle.rotation[0] = random() * Math.PI * 2;
+  particle.rotation[1] = random() * Math.PI * 2;
+  particle.rotation[2] = random() * Math.PI * 2;
   particle.spin = physics.spin * (0.6 + random() * 0.8) * (random() < 0.5 ? -1 : 1);
   particle.phase = random() * Math.PI * 2;
   particle.size = physics.size * (0.7 + random() * 0.6);
-  particle.color = [...palette[Math.floor(random() * palette.length)]];
+  const rgb = palette[Math.floor(random() * palette.length)];
+  particle.color[0] = rgb[0];
+  particle.color[1] = rgb[1];
+  particle.color[2] = rgb[2];
+  field.aliveCount += 1;
 }
 
 // Sideways push from the visitor's ripple gusts ([x, z, ageSeconds, strength] quads).
@@ -87,7 +97,12 @@ function gustPush(gusts, x, z) {
   return push;
 }
 
-export function stepFalling(field, dtSec, { rates = {}, wind, motionScale = 1 } = {}) {
+export function stepFalling(field, dtSec, { rates = NO_RATES, wind, motionScale = 1 } = {}) {
+  // Idle (e.g. summer): nothing alive and nothing to spawn, so skip everything.
+  const idle =
+    field.aliveCount === 0 && !(rates.petals > 0) && !(rates.leaves > 0) && !(rates.snow > 0);
+  if (idle) return field;
+
   const dt = dtSec * motionScale;
   field.time += dt;
   const { particles, area } = field;
@@ -126,7 +141,10 @@ export function stepFalling(field, dtSec, { rates = {}, wind, motionScale = 1 } 
     p.rotation[2] += p.spin * 0.3 * dt;
 
     const outside = p.x < area.xMin || p.x > area.xMax || p.z < area.zMin || p.z > area.zMax;
-    if (outside || p.y <= terrainHeight(p.x, p.z)) p.alive = false;
+    if (outside || p.y <= terrainHeight(p.x, p.z)) {
+      p.alive = false;
+      field.aliveCount -= 1;
+    }
   }
   return field;
 }

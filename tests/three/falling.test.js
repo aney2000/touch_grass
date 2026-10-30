@@ -57,4 +57,26 @@ describe("createFallingParticles", () => {
     assert.ok(system.snow.geometry.drawRange.count > 0);
     assert.equal(system.flakes.count, 0);
   });
+
+  it("does not flag buffer uploads while nothing is alive", () => {
+    const system = createFallingParticles({ capacity: 60 });
+    run(system, NONE, 3);
+    const versions = () => [
+      system.flakes.instanceMatrix.version,
+      system.flakes.instanceColor.version,
+      system.snow.geometry.attributes.position.version,
+    ];
+    const before = versions();
+    run(system, NONE, 5);
+    assert.equal(system.flakes.count, 0);
+    assert.deepEqual(versions(), before);
+  });
+
+  it("only uploads the flake buffers that changed while snowing", () => {
+    const system = createFallingParticles({ capacity: 60 });
+    run(system, { ...NONE, snow: 1 }, 10);
+    const before = system.flakes.instanceMatrix.version;
+    run(system, { ...NONE, snow: 1 }, 5);
+    assert.equal(system.flakes.instanceMatrix.version, before);
+  });
 });

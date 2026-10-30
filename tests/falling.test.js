@@ -104,3 +104,30 @@ describe("falling particles", () => {
     assert.ok(alive(gusty)[0].x > alive(calm)[0].x);
   });
 });
+
+describe("falling particles idle cost", () => {
+  it("leaves an empty field untouched at zero rates (early return)", () => {
+    const field = createFallingField({ seed: 1, capacity: 20 });
+    const before = JSON.stringify(field);
+    stepFalling(field, 1 / 30, { rates: NONE });
+    assert.equal(JSON.stringify(field), before);
+    assert.equal(field.aliveCount, 0);
+  });
+
+  it("tracks how many particles are alive", () => {
+    const field = run(createFallingField({ seed: 1, capacity: 50 }), 0.5, {
+      rates: { ...NONE, snow: 1 },
+    });
+    assert.equal(field.aliveCount, alive(field).length);
+    assert.ok(field.aliveCount > 0);
+  });
+
+  it("reuses particle rotation and colour arrays when respawning", () => {
+    const field = createFallingField({ seed: 1, capacity: 5 });
+    const { rotation, color } = field.particles[0];
+    stepFalling(field, 0.1, { rates: { ...NONE, leaves: 1 } });
+    assert.notDeepEqual(rotation, [0, 0, 0]);
+    assert.equal(field.particles[0].rotation, rotation);
+    assert.equal(field.particles[0].color, color);
+  });
+});
