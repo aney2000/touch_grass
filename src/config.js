@@ -32,6 +32,63 @@ export const twilightPalette = {
 export const DAY_NIGHT_MS = 4200;
 export const REDUCED_MOTION_DAY_NIGHT_MS = 1100;
 
+// Season morphs are slower than day/night: the whole meadow changes over.
+export const SEASON_MS = 3500;
+export const REDUCED_MOTION_SEASON_MS = 1000;
+
+const freezeLook = ({ foliage, particleRates, ...rest }) =>
+  Object.freeze({
+    ...rest,
+    foliage: Object.freeze(foliage),
+    particleRates: Object.freeze(particleRates),
+  });
+
+// What each season looks like at midday. Colours are hex; seasonLook() blends
+// them into unit RGB. `particles` names the season's dominant falling particle,
+// while `particleRates` (0..1 per kind) lets two kinds crossfade during a morph.
+export const SEASON_LOOKS = Object.freeze({
+  spring: freezeLook({
+    grassHeight: 0.85,
+    grassBase: "#4f9a2e",
+    grassTip: "#a6dc5a",
+    snowCover: 0,
+    groundTint: "#5f9e3a",
+    foliage: { color: "#f6d6e2", density: 0.75, blossom: 0.7 },
+    particles: "petals",
+    particleRates: { petals: 0.6, leaves: 0, snow: 0 },
+  }),
+  summer: freezeLook({
+    grassHeight: 1.15,
+    grassBase: "#3c8420",
+    grassTip: "#7cc23a",
+    snowCover: 0,
+    groundTint: "#4c9a2c",
+    foliage: { color: "#3f8a2a", density: 1, blossom: 0 },
+    particles: "none",
+    particleRates: { petals: 0, leaves: 0, snow: 0 },
+  }),
+  autumn: freezeLook({
+    grassHeight: 0.95,
+    grassBase: "#8a7a34",
+    grassTip: "#d4b25a",
+    snowCover: 0,
+    groundTint: "#8c7a3c",
+    foliage: { color: "#c8541e", density: 0.65, blossom: 0 },
+    particles: "leaves",
+    particleRates: { petals: 0, leaves: 0.7, snow: 0 },
+  }),
+  winter: freezeLook({
+    grassHeight: 0.25,
+    grassBase: "#7f9488",
+    grassTip: "#c9d6cf",
+    snowCover: 1,
+    groundTint: "#e8eef2",
+    foliage: { color: "#6b5a4a", density: 0, blossom: 0 },
+    particles: "snow",
+    particleRates: { petals: 0, leaves: 0, snow: 0.8 },
+  }),
+});
+
 // Seed for the scene's deterministic random generator.
 export const SCENE_SEED = 741;
 
