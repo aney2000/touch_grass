@@ -23,8 +23,9 @@
       </canvas>
 
       <p class="sr-only">
-        Move your cursor across the grass to stir the breeze. Use the button below, or press the N
-        key, to switch between day and night.
+        Move your cursor across the grass to stir the breeze. Use the buttons below, or press the N
+        key, to switch between day and night, and the Z key for a minute of zen with nothing on
+        screen. Press Escape to leave zen early.
       </p>
 
       <header class="masthead">
@@ -55,12 +56,35 @@
             <span class="scene-toggle__icon" aria-hidden="true"></span>
             <span class="scene-toggle__label" aria-live="polite">Let night fall</span>
           </button>
+          <button
+            class="dock-button zen-toggle"
+            id="zen-toggle"
+            type="button"
+            aria-pressed="false"
+            aria-keyshortcuts="Z"
+            title="Hide everything for a minute (Z)"
+          >
+            <span class="zen-toggle__icon" aria-hidden="true"></span>
+            <span>Zen</span>
+          </button>
         </div>
       </footer>
 
       <p class="scene-hint" aria-hidden="true">
-        Brush the grass &middot; press <kbd>N</kbd> for night
+        Brush the grass &middot; press <kbd>N</kbd> for night &middot; <kbd>Z</kbd> for zen
       </p>
+
+      <button
+        class="zen-countdown"
+        id="zen-countdown"
+        type="button"
+        aria-label="Leave zen mode"
+        hidden
+      >
+        <span class="zen-countdown__ring" aria-hidden="true"></span>
+        <span class="zen-countdown__time" aria-hidden="true">1:00</span>
+      </button>
+      <p class="sr-only" id="zen-status" aria-live="polite"></p>
     </main>
     <noscript
       >This little field needs JavaScript to move. It will be here when you're ready.</noscript

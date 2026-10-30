@@ -41,6 +41,56 @@ describe("scene control dock", () => {
   });
 });
 
+describe("zen mode shell", () => {
+  it("offers a Zen toggle button in the dock", () => {
+    const dock = elementBlock(/<div class="scene-dock"/, "div");
+    assert.match(dock, /class="dock-button zen-toggle"\s+id="zen-toggle"/);
+    assert.match(dock, /id="zen-toggle"[^>]*aria-pressed="false"/);
+  });
+
+  it("keeps the countdown pill hidden and outside the controls it outlives", () => {
+    const footer = elementBlock(/<footer class="scene-controls"/, "footer");
+    assert.doesNotMatch(footer, /zen-countdown/);
+    assert.match(html, /<button[^>]*class="zen-countdown"[^>]*id="zen-countdown"[^>]*hidden/);
+    assert.match(html, /class="zen-countdown__time"/);
+  });
+
+  it("has a polite live region for announcing the start and end", () => {
+    assert.match(html, /id="zen-status"[^>]*aria-live="polite"/);
+  });
+
+  it("parks the countdown at the bottom-left, away from the host badge", () => {
+    const pill = ruleBody(".zen-countdown");
+    assert.match(pill, /left:/);
+    assert.match(pill, /bottom:/);
+    assert.doesNotMatch(pill, /right:/);
+  });
+
+  it("fades out every overlay, overriding the entrance animations", () => {
+    const start = css.indexOf(".scene--zen .masthead,");
+    assert.ok(start >= 0, "expected a combined .scene--zen hiding rule");
+    const rule = css.slice(start, css.indexOf("}", start));
+    for (const selector of [".masthead", ".scene-title", ".scene-controls", ".scene-hint"]) {
+      assert.ok(rule.includes(`.scene--zen ${selector}`), `zen hides ${selector}`);
+    }
+    assert.match(rule, /opacity:\s*0\s*!important/);
+    assert.match(rule, /visibility:\s*hidden\s*!important/);
+    assert.match(rule, /pointer-events:\s*none/);
+  });
+
+  it("lets entrance animations release their last frame so zen can fade overlays back in", () => {
+    assert.match(css, /animation: rise-in 900ms cubic-bezier\([^)]*\) backwards;/);
+  });
+
+  it("keeps a hidden countdown hidden despite its own display style", () => {
+    assert.match(ruleBody(".zen-countdown[hidden]"), /display:\s*none/);
+  });
+
+  it("drains the countdown ring from the --zen-progress custom property", () => {
+    assert.match(css, /var\(--zen-progress/);
+  });
+});
+
 describe("hosting badge clearance", () => {
   it("names the bottom-right area the host's badge covers", () => {
     const root = ruleBody(":root");

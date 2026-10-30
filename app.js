@@ -24,6 +24,7 @@ import { createGrass } from "./src/three/grass.js";
 import { createFireflyLights } from "./src/three/fireflies.js";
 import { createClockView } from "./src/ui/clock-view.js";
 import { bindDayNightToggle } from "./src/ui/day-night-toggle.js";
+import { bindZenMode } from "./src/ui/zen-mode.js";
 
 const COMPACT_SCREEN_PX = 700;
 const MAX_PIXEL_RATIO = 1.75;
@@ -94,6 +95,7 @@ function frame(now = 0) {
   stage?.render(snapshot.atmosphere);
   updateThemeColor();
   clockView.render(model.clock());
+  zenMode.update(now);
   window.requestAnimationFrame(frame);
 }
 
@@ -103,6 +105,17 @@ bindDayNightToggle({
   label: document.querySelector(".scene-toggle__label"),
   sceneElement,
   model,
+  keyTarget: window,
+  now: () => model.now,
+});
+
+// The Zen button, or Z, hides everything but the field for a minute.
+const zenMode = bindZenMode({
+  button: document.querySelector("#zen-toggle"),
+  countdown: document.querySelector("#zen-countdown"),
+  countdownText: document.querySelector(".zen-countdown__time"),
+  announcer: document.querySelector("#zen-status"),
+  sceneElement,
   keyTarget: window,
   now: () => model.now,
 });
