@@ -10,7 +10,9 @@
   --paper: #fffdf5;
   --control-shadow: 0 5px 22px rgb(20 56 40 / 12%);
   --sky-ink: #fffdf5;
-  --sky-ink-shadow: 0 1px 14px rgb(8 36 92 / 38%);
+  --sky-ink-shadow: 0 1px 3px rgb(8 24 48 / 60%), 0 1px 14px rgb(8 36 92 / 45%);
+  /* Soft dark pill behind small text so it stays readable over the light sky. */
+  --sky-scrim: rgb(16 32 48 / 0.55);
   /* The host pins a "Powered by Netlify" badge (~200 x 50px) to the bottom-right
      corner. Controls never enter this area. */
   --badge-clearance-x: 232px;
@@ -150,6 +152,26 @@ a {
   text-shadow: var(--sky-ink-shadow);
 }
 
+.masthead__note,
+.scene-title__eyebrow {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--sky-scrim);
+}
+
+@supports (backdrop-filter: blur(1px)) {
+  .masthead__note,
+  .scene-title__eyebrow {
+    backdrop-filter: blur(6px);
+  }
+}
+
+/* Removed by app.js on boot; without JS the controls would do nothing. */
+html.no-js .scene-dock {
+  display: none;
+}
+
 /* Clock and dock hug the bottom-left; the right padding keeps them clear of the
    host badge, and extra rows wrap upwards rather than sliding under it. */
 .scene-controls {
@@ -178,12 +200,19 @@ a {
   gap: 8px;
 }
 
+/* Paper backplate like the dock buttons: dark ink stays readable on any sky. */
 .scene-clock {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
   margin: 0;
-  color: var(--paper);
+  padding: 0 16px;
+  border-radius: 999px;
+  background: rgb(255 253 245 / 0.86);
+  box-shadow: var(--control-shadow);
+  color: var(--ink);
   font-family: Georgia, "Times New Roman", serif;
   font-size: 23px;
-  text-shadow: 0 1px 8px rgb(20 56 40 / 24%);
 }
 
 .scene-clock__meridiem {
@@ -221,14 +250,24 @@ a {
   transform: translateY(0);
 }
 
-.dock-button[aria-pressed="true"] {
-  border-color: #f3bd53;
+/* Selected: thick amber border, warm fill and a dark underline bar that clears
+   3:1 against the fill. aria-checked is ready for role="radio" seasons. */
+.dock-button[aria-pressed="true"],
+.dock-button[aria-checked="true"] {
+  border: 2px solid #f3bd53;
+  background: #fff3d1;
+  box-shadow:
+    inset 0 -3px 0 #8a5a00,
+    var(--control-shadow);
 }
 
+/* Two-tone ring: the dark outline shows on light skies, the amber halo on dark. */
 .dock-button:focus-visible,
-.wordmark:focus-visible {
-  outline: 3px solid #f3bd53;
-  outline-offset: 4px;
+.wordmark:focus-visible,
+.zen-countdown:focus-visible {
+  outline: 3px solid #1d2b36;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px #f3bd53;
 }
 
 .scene-toggle__icon {
@@ -252,10 +291,12 @@ a {
 
 .season-picker {
   display: flex;
-  gap: 4px;
+  gap: 6px;
 }
 
 .season-button {
+  min-width: 44px;
+  justify-content: center;
   gap: 8px;
   padding: 0 13px;
 }
@@ -265,7 +306,14 @@ a {
   height: 10px;
   border-radius: 50%;
   background: var(--season-dot);
-  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 14%);
+  box-shadow: 0 0 0 1px var(--season-ring, rgb(0 0 0 / 14%));
+}
+
+.season-button[aria-pressed="true"] .season-button__dot,
+.season-button[aria-checked="true"] .season-button__dot {
+  box-shadow:
+    0 0 0 2px var(--paper),
+    0 0 0 4px #8a5a00;
 }
 
 .season-button[data-season="spring"] {
@@ -281,7 +329,8 @@ a {
 }
 
 .season-button[data-season="winter"] {
-  --season-dot: #dfe9f0;
+  --season-dot: #a9c3d9;
+  --season-ring: rgb(60 90 120 / 70%);
 }
 
 .scene--night .wordmark__mark::after {
@@ -295,14 +344,35 @@ a {
   color: #f1f2dc;
 }
 
+.scene--night .masthead__note,
+.scene--night .scene-title__eyebrow {
+  background: rgb(8 16 28 / 0.45);
+}
+
 .scene--night .dock-button {
   border-color: rgb(246 230 187 / 22%);
   background: #20332f;
   color: #f6e6bb;
 }
 
-.scene--night .dock-button[aria-pressed="true"] {
-  border-color: rgb(243 189 83 / 70%);
+.scene--night .dock-button[aria-pressed="true"],
+.scene--night .dock-button[aria-checked="true"] {
+  border-color: #f3bd53;
+  background: #2f4a43;
+  color: #f6e6bb;
+  box-shadow: inset 0 -3px 0 #f3bd53;
+}
+
+.scene--night .season-button[aria-pressed="true"] .season-button__dot,
+.scene--night .season-button[aria-checked="true"] .season-button__dot {
+  box-shadow:
+    0 0 0 2px #2f4a43,
+    0 0 0 4px #f3bd53;
+}
+
+.scene--night .scene-clock {
+  background: rgb(32 51 47 / 0.86);
+  color: #f6e6bb;
 }
 
 .scene--night .scene-toggle__icon::after {
@@ -364,8 +434,49 @@ a {
     padding-right: 0;
   }
 
-  .scene-hint {
-    bottom: calc(max(20px, env(safe-area-inset-bottom)) + var(--badge-clearance-y) + 62px);
+  /* Icon-only dock in one row: 7 x 44px + 3 x 4px = 320px fits 360px screens
+     inside their 20px insets. Labels stay as accessible names. */
+  .scene-dock {
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+
+  .dock-button {
+    width: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .dock-button > span:not([class$="__icon"]):not(.season-button__dot) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .season-picker {
+    gap: 0;
+  }
+
+  .season-picker .season-button {
+    border-radius: 0;
+  }
+
+  .season-button + .season-button {
+    border-left: 1px solid rgb(20 56 40 / 18%);
+  }
+
+  .season-picker .season-button:first-child {
+    border-radius: 999px 0 0 999px;
+  }
+
+  .season-picker .season-button:last-child {
+    border-radius: 0 999px 999px 0;
   }
 }
 
@@ -457,8 +568,8 @@ a {
 .scene-hint {
   position: absolute;
   z-index: 1;
-  /* Floats above the control row so it never collides with the dock. */
-  bottom: calc(max(28px, env(safe-area-inset-bottom)) + 66px);
+  /* Top-centre under the masthead: never meets a wrapped dock or the badge. */
+  top: calc(max(27px, env(safe-area-inset-top)) + 52px);
   left: 50%;
   margin: 0;
   padding: 7px 14px;
@@ -566,7 +677,7 @@ a {
 .scene-controls,
 .scene-hint {
   transition:
-    opacity 600ms ease,
+    opacity 1200ms ease,
     visibility 0s linear 0s;
 }
 
@@ -578,8 +689,8 @@ a {
   visibility: hidden !important;
   pointer-events: none;
   transition:
-    opacity 600ms ease,
-    visibility 0s linear 600ms;
+    opacity 900ms ease,
+    visibility 0s linear 900ms;
 }
 
 .scene--zen .scene-controls > * {
@@ -608,7 +719,11 @@ a {
 }
 
 .constellation-toggle--waiting {
-  opacity: 0.6;
+  color: inherit;
+}
+
+.constellation-toggle--waiting .constellation-toggle__icon {
+  opacity: 0.55;
 }
 
 /* The one thing left on screen in zen mode: a quiet countdown that doubles as
@@ -645,6 +760,30 @@ a {
   opacity: 1;
 }
 
+/* Quieter after a while (class toggled by script): ring only, digits hidden. */
+.zen-countdown--quiet {
+  opacity: 0.35;
+}
+
+.zen-countdown--quiet .zen-countdown__time {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+.zen-countdown--quiet:focus-visible {
+  opacity: 1;
+}
+
+.zen-countdown--quiet:focus-visible .zen-countdown__time {
+  position: static;
+  width: auto;
+  height: auto;
+  clip: auto;
+}
+
 /* Hover lifts only where a pointer can hover; on touch it would stick. */
 @media (hover: hover) {
   .dock-button:hover {
@@ -655,6 +794,13 @@ a {
   .zen-countdown:hover {
     opacity: 1;
   }
+
+  .zen-countdown--quiet:hover .zen-countdown__time {
+    position: static;
+    width: auto;
+    height: auto;
+    clip: auto;
+  }
 }
 
 /* Touch screens have no keyboard to hint at: just invite a brush. */
@@ -662,11 +808,6 @@ a {
   .scene-hint__keys {
     display: none;
   }
-}
-
-.zen-countdown:focus-visible {
-  outline: 3px solid #f3bd53;
-  outline-offset: 4px;
 }
 
 .zen-countdown__ring {

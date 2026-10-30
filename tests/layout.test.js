@@ -67,6 +67,109 @@ describe("season picker", () => {
     const narrow = css.slice(css.indexOf("@media (max-width: 600px)"));
     assert.match(narrow, /\.season-button__label\s*\{[^}]*display:\s*none/);
   });
+
+  it("gives season buttons a 44px minimum width and room between them", () => {
+    const minWidth = Number(ruleBody(".season-button").match(/min-width:\s*(\d+)px/)[1]);
+    assert.ok(minWidth >= 44, `min-width ${minWidth}`);
+    const gap = Number(ruleBody(".season-picker").match(/gap:\s*(\d+)px/)[1]);
+    assert.ok(gap >= 6, `gap ${gap}`);
+  });
+
+  it("styles the selected state for both aria-pressed and aria-checked", () => {
+    const body = ruleBody('.dock-button[aria-pressed="true"],\n.dock-button[aria-checked="true"]');
+    const border = Number(body.match(/border:\s*(\d+)px solid #f3bd53/i)[1]);
+    assert.ok(border >= 2);
+    assert.match(body, /background:\s*#fff3d1/i);
+    assert.match(css, /\.scene--night \.dock-button\[aria-checked="true"\]/);
+  });
+});
+
+describe("phone dock (≤540px)", () => {
+  const phone = () => mediaBlock("(max-width: 540px)");
+
+  it("turns every dock label into a visually hidden accessible name", () => {
+    const block = phone();
+    const rule = block.match(/\.dock-button > span:not\(\[class\$="__icon"\]\)[^{]*\{([^}]*)\}/);
+    assert.ok(rule, "expected a visually-hidden rule for dock labels");
+    assert.match(rule[1], /clip/);
+    assert.match(rule[1], /position:\s*absolute/);
+    assert.doesNotMatch(rule[1], /display:\s*none/);
+  });
+
+  it("makes every dock button a 44px square", () => {
+    const rule = phone().match(/\.dock-button\s*\{([^}]*)\}/)[1];
+    for (const prop of ["min-width", "min-height", "width"]) {
+      const value = Number(rule.match(new RegExp(`${prop}:\\s*(\\d+)px`))[1]);
+      assert.equal(value, 44, prop);
+    }
+  });
+
+  it("joins the seasons into one segmented pill", () => {
+    const block = phone();
+    assert.match(block, /\.season-picker\s*\{[^}]*gap:\s*0/);
+    assert.match(block, /\.season-button \+ \.season-button\s*\{[^}]*border-left:\s*1px/);
+  });
+
+  it("gives every text-labelled dock button an icon", () => {
+    for (const id of ["scene-toggle", "zen-toggle", "constellation-toggle"]) {
+      const button = html.match(new RegExp(`<button[^>]*id="${id}"[\\s\\S]*?</button>`))[0];
+      assert.match(button, /__icon" aria-hidden="true"/, id);
+    }
+  });
+});
+
+describe("hint placement", () => {
+  it("sits at the top centre, out of the bottom-right and the dock's path", () => {
+    const hint = ruleBody(".scene-hint");
+    assert.match(hint, /top:/);
+    assert.doesNotMatch(hint, /bottom:/);
+    assert.doesNotMatch(hint, /right:/);
+    assert.doesNotMatch(mediaBlock("(max-width: 540px)"), /\.scene-hint/);
+  });
+});
+
+describe("constellation waiting state", () => {
+  it("dims only the icon, never the whole button", () => {
+    assert.doesNotMatch(ruleBody(".constellation-toggle--waiting"), /opacity/);
+    const icon = ruleBody(".constellation-toggle--waiting .constellation-toggle__icon");
+    assert.ok(Number(icon.match(/opacity:\s*([\d.]+)/)[1]) <= 0.6);
+  });
+});
+
+describe("zen timings and quiet countdown", () => {
+  const ms = (body, rx) => Number(body.match(rx)[1]);
+
+  it("fades out over 900ms and returns over 1200ms", () => {
+    const back = ruleBody(".masthead,\n.scene-title,\n.scene-controls,\n.scene-hint");
+    assert.equal(ms(back, /opacity (\d+)ms/), 1200);
+    const start = css.indexOf(".scene--zen .masthead,");
+    const away = css.slice(start, css.indexOf("}", start));
+    assert.equal(ms(away, /opacity (\d+)ms/), 900);
+    assert.equal(ms(away, /visibility 0s linear (\d+)ms/), 900);
+  });
+
+  it("offers a quieter countdown that hides its digits until hovered or focused", () => {
+    const quiet = ruleBody(".zen-countdown--quiet");
+    assert.ok(Number(quiet.match(/opacity:\s*([\d.]+)/)[1]) <= 0.4);
+    assert.match(css, /\.zen-countdown--quiet \.zen-countdown__time\s*\{[^}]*clip/);
+    assert.match(css, /\.zen-countdown--quiet:focus-visible/);
+  });
+});
+
+describe("no-JS and CSP", () => {
+  it("marks the document no-js and hides the dock until the script removes it", () => {
+    assert.match(html, /<html[^>]*class="no-js"/);
+    assert.match(css, /html\.no-js \.scene-dock\s*\{[^}]*display:\s*none/);
+  });
+
+  it("uses no inline style attributes or style elements", () => {
+    assert.doesNotMatch(html, /\sstyle="/);
+    assert.doesNotMatch(html, /<style/);
+  });
+
+  it("exposes the canvas as a labelled image", () => {
+    assert.match(html, /<canvas[^>]*role="img"[^>]*aria-label="[^"]+"/);
+  });
 });
 
 describe("zen mode shell", () => {
@@ -137,11 +240,6 @@ describe("hosting badge clearance", () => {
     const narrow = css.slice(css.indexOf("@media (max-width: 540px)"));
     assert.match(narrow, /\.scene-controls\s*\{[^}]*padding-right:\s*0/);
     assert.match(narrow, /\.scene-controls\s*\{[^}]*bottom:[^;]*var\(--badge-clearance-y\)/);
-  });
-
-  it("lifts the hint along with the controls so the two never overlap", () => {
-    const narrow = css.slice(css.indexOf("@media (max-width: 540px)"));
-    assert.match(narrow, /\.scene-hint\s*\{[^}]*bottom:[^;]*var\(--badge-clearance-y\)/);
   });
 });
 
