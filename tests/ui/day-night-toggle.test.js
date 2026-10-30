@@ -2,8 +2,21 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { bindDayNightToggle } from "../../src/ui/day-night-toggle.js";
 import { fakeElement, keydown } from "./fakes.js";
+import { createShortcutGate } from "../../src/ui/shortcuts.js";
 
-function setup() {
+describe("bindDayNightToggle shortcut gate", () => {
+  it("ignores N while keyboard shortcuts are switched off", () => {
+    const shortcuts = createShortcutGate({ enabled: false });
+    const { keyTarget, toggles } = setup({ shortcuts });
+    keyTarget.dispatchEvent(keydown("n"));
+    assert.equal(toggles.length, 0);
+    shortcuts.setEnabled(true);
+    keyTarget.dispatchEvent(keydown("n"));
+    assert.equal(toggles.length, 1);
+  });
+});
+
+function setup({ shortcuts } = {}) {
   const button = fakeElement();
   button.setAttribute("aria-pressed", "false");
   const label = fakeElement({ text: "Let night fall" });
@@ -25,6 +38,7 @@ function setup() {
     model,
     keyTarget,
     now: () => 777,
+    shortcuts,
   });
   return { button, label, sceneElement, keyTarget, toggles, binding };
 }

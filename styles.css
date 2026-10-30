@@ -808,6 +808,23 @@ html.no-js .scene-dock {
   .scene-hint__keys {
     display: none;
   }
+
+  .shortcut-toggle {
+    display: none;
+  }
+}
+
+/* A small key cap: the shortcut switch is a utility, so it stays understated. */
+.shortcut-toggle {
+  font-size: 12px;
+}
+
+.shortcut-toggle__icon {
+  width: 15px;
+  height: 11px;
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+  box-shadow: inset 0 -3px 0 -1.5px currentColor;
 }
 
 .zen-countdown__ring {

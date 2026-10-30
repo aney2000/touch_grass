@@ -3,7 +3,7 @@
 // timers of its own; the animation loop calls update(now) every frame.
 
 import { createZenTimer, formatCountdown } from "../zen.js";
-import { matchesShortcut } from "./shortcuts.js";
+import { createShortcutGate, matchesShortcut } from "./shortcuts.js";
 
 const ZEN_CLASS = "scene--zen";
 const MESSAGES = { start: "Zen mode for 1 minute", end: "Zen mode ended" };
@@ -17,6 +17,7 @@ export function bindZenMode({
   keyTarget,
   now,
   timer = createZenTimer(),
+  shortcuts = createShortcutGate(),
 }) {
   let active = false;
   let lastText = "";
@@ -64,7 +65,7 @@ export function bindZenMode({
   }
 
   function onKeydown(event) {
-    if (matchesShortcut(event, "z")) toggle();
+    if (shortcuts.matches(event, "z")) toggle();
     else if (active && matchesShortcut(event, "Escape")) exit();
   }
 

@@ -2,13 +2,21 @@
 // season morphs the model, presses exactly one button and tags the scene
 // element with data-season for season-aware styling.
 
-import { matchesShortcut } from "./shortcuts.js";
+import { createShortcutGate } from "./shortcuts.js";
 
 const SHORTCUTS = { 1: "spring", 2: "summer", 3: "autumn", 4: "winter" };
 
 const titleCase = (name) => name.charAt(0).toUpperCase() + name.slice(1);
 
-export function bindSeasonPicker({ buttons, sceneElement, model, keyTarget, now, announcer }) {
+export function bindSeasonPicker({
+  buttons,
+  sceneElement,
+  model,
+  keyTarget,
+  now,
+  announcer,
+  shortcuts = createShortcutGate(),
+}) {
   function reflect(season) {
     for (const entry of buttons) {
       entry.element.setAttribute("aria-pressed", String(entry.season === season));
@@ -29,7 +37,7 @@ export function bindSeasonPicker({ buttons, sceneElement, model, keyTarget, now,
   });
 
   function onKeydown(event) {
-    const match = Object.keys(SHORTCUTS).find((key) => matchesShortcut(event, key));
+    const match = Object.keys(SHORTCUTS).find((key) => shortcuts.matches(event, key));
     if (match) select(SHORTCUTS[match]);
   }
   keyTarget.addEventListener("keydown", onKeydown);

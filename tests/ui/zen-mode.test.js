@@ -3,8 +3,21 @@ import assert from "node:assert/strict";
 import { bindZenMode } from "../../src/ui/zen-mode.js";
 import { createZenTimer } from "../../src/zen.js";
 import { fakeElement, keydown } from "./fakes.js";
+import { createShortcutGate } from "../../src/ui/shortcuts.js";
 
-function setup({ durationMs = 60_000 } = {}) {
+describe("bindZenMode shortcut gate", () => {
+  it("ignores Z while shortcuts are off, but Escape still leaves zen", () => {
+    const shortcuts = createShortcutGate({ enabled: false });
+    const { keyTarget, zen } = setup({ shortcuts });
+    keyTarget.dispatchEvent(keydown("z"));
+    assert.equal(zen.isActive(), false);
+    zen.enter();
+    keyTarget.dispatchEvent(keydown("Escape"));
+    assert.equal(zen.isActive(), false);
+  });
+});
+
+function setup({ durationMs = 60_000, shortcuts } = {}) {
   let clock = 1_000;
   const elements = {
     button: fakeElement(),
@@ -20,6 +33,7 @@ function setup({ durationMs = 60_000 } = {}) {
     keyTarget,
     now: () => clock,
     timer: createZenTimer({ durationMs }),
+    shortcuts,
   });
   return {
     ...elements,

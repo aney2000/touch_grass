@@ -2,10 +2,11 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { bindSeasonPicker } from "../../src/ui/season-picker.js";
 import { fakeElement, keydown } from "./fakes.js";
+import { createShortcutGate } from "../../src/ui/shortcuts.js";
 
 const NAMES = ["spring", "summer", "autumn", "winter"];
 
-function setup() {
+function setup({ shortcuts } = {}) {
   const buttons = NAMES.map((season) => ({ season, element: fakeElement() }));
   const sceneElement = fakeElement();
   const keyTarget = new EventTarget();
@@ -26,6 +27,7 @@ function setup() {
     keyTarget,
     now: () => 321,
     announcer,
+    shortcuts,
   });
   const pressed = () =>
     buttons.filter(({ element }) => element.getAttribute("aria-pressed") === "true");
@@ -81,6 +83,12 @@ describe("bindSeasonPicker", () => {
     keyTarget.dispatchEvent(keydown("1", { target: { tagName: "INPUT" } }));
     keyTarget.dispatchEvent(keydown("2", { ctrlKey: true }));
     keyTarget.dispatchEvent(keydown("5"));
+    assert.equal(calls.length, 0);
+  });
+
+  it("ignores the number keys while shortcuts are switched off", () => {
+    const { keyTarget, calls } = setup({ shortcuts: createShortcutGate({ enabled: false }) });
+    keyTarget.dispatchEvent(keydown("1"));
     assert.equal(calls.length, 0);
   });
 

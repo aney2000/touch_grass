@@ -118,6 +118,23 @@ describe("phone dock (≤540px)", () => {
   });
 });
 
+describe("shortcut toggle", () => {
+  it("is a pressed-state dock button with a keyboard icon and a label", () => {
+    const dock = elementBlock(/<div class="scene-dock"/, "footer");
+    const button = dock.match(/<button[^>]*id="shortcut-toggle"[\s\S]*?<\/button>/);
+    assert.ok(button, "expected #shortcut-toggle in the dock");
+    assert.match(button[0], /class="dock-button shortcut-toggle"/);
+    assert.match(button[0], /aria-pressed="true"/);
+    assert.match(button[0], /class="shortcut-toggle__icon" aria-hidden="true"/);
+    assert.match(button[0], /class="shortcut-toggle__label">Shortcuts on</);
+  });
+
+  it("is hidden on touch devices, which have no keyboard to switch off", () => {
+    const touch = mediaBlock("(hover: none) and (pointer: coarse)");
+    assert.match(touch, /\.shortcut-toggle\s*\{[^}]*display:\s*none/);
+  });
+});
+
 describe("hint placement", () => {
   it("sits at the top centre, out of the bottom-right and the dock's path", () => {
     const hint = ruleBody(".scene-hint");

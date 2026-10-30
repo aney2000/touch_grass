@@ -2,8 +2,9 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { bindConstellationToggle } from "../../src/ui/constellation-toggle.js";
 import { fakeElement, keydown } from "./fakes.js";
+import { createShortcutGate } from "../../src/ui/shortcuts.js";
 
-function setup({ night = true } = {}) {
+function setup({ night = true, shortcuts } = {}) {
   const button = fakeElement();
   const announcer = fakeElement();
   const keyTarget = new EventTarget();
@@ -27,6 +28,7 @@ function setup({ night = true } = {}) {
     model,
     keyTarget,
     now: () => 42,
+    shortcuts,
     bringNight: () => {
       nightfalls.push(true);
       model.isNight = true;
@@ -50,6 +52,12 @@ describe("bindConstellationToggle", () => {
     const { keyTarget, model } = setup();
     keyTarget.dispatchEvent(keydown("c"));
     assert.equal(model.constellationsVisible, true);
+  });
+
+  it("ignores C while shortcuts are switched off", () => {
+    const { keyTarget, model } = setup({ shortcuts: createShortcutGate({ enabled: false }) });
+    keyTarget.dispatchEvent(keydown("c"));
+    assert.equal(model.constellationsVisible, false);
   });
 
   it("ignores C typed into a text field", () => {

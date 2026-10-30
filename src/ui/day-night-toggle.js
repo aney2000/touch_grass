@@ -1,11 +1,19 @@
 // The day/night button and its "N" shortcut. Flips the model, then reflects
 // the new target in the button's pressed state, its label and the scene class.
 
-import { matchesShortcut } from "./shortcuts.js";
+import { createShortcutGate } from "./shortcuts.js";
 
 const LABELS = { day: "Let night fall", night: "Let morning in" };
 
-export function bindDayNightToggle({ button, label, sceneElement, model, keyTarget, now }) {
+export function bindDayNightToggle({
+  button,
+  label,
+  sceneElement,
+  model,
+  keyTarget,
+  now,
+  shortcuts = createShortcutGate(),
+}) {
   function toggle() {
     const night = model.toggleNight(now()) === 1;
     button.setAttribute("aria-pressed", String(night));
@@ -14,7 +22,7 @@ export function bindDayNightToggle({ button, label, sceneElement, model, keyTarg
   }
 
   function onKeydown(event) {
-    if (matchesShortcut(event, "n")) toggle();
+    if (shortcuts.matches(event, "n")) toggle();
   }
 
   button.addEventListener("click", toggle);

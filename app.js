@@ -35,6 +35,7 @@ import { bindZenMode } from "./src/ui/zen-mode.js";
 import { bindSeasonPicker } from "./src/ui/season-picker.js";
 import { createConstellations, createSkyPicker } from "./src/three/constellations.js";
 import { bindConstellationToggle } from "./src/ui/constellation-toggle.js";
+import { createShortcutGate, bindShortcutToggle } from "./src/ui/shortcuts.js";
 
 import { chooseQuality, stepDown, stageOptionsFor } from "./src/quality.js";
 import { createFrameGovernor } from "./src/frame-governor.js";
@@ -193,6 +194,14 @@ function frame(now) {
   constellationToggle.sync();
 }
 
+// One switch silences every single-key shortcut (WCAG 2.1.4).
+const shortcuts = createShortcutGate();
+bindShortcutToggle({
+  button: document.querySelector("#shortcut-toggle"),
+  label: document.querySelector(".shortcut-toggle__label"),
+  gate: shortcuts,
+});
+
 // The button, or the N key anywhere, switches between day and night.
 const dayNight = bindDayNightToggle({
   button: document.querySelector("#scene-toggle"),
@@ -200,6 +209,7 @@ const dayNight = bindDayNightToggle({
   sceneElement,
   model,
   keyTarget: window,
+  shortcuts,
   now: () => model.now,
 });
 
@@ -211,6 +221,7 @@ const zenMode = bindZenMode({
   announcer: document.querySelector("#zen-status"),
   sceneElement,
   keyTarget: window,
+  shortcuts,
   now: () => model.now,
 });
 
@@ -223,6 +234,7 @@ bindSeasonPicker({
   sceneElement,
   model,
   keyTarget: window,
+  shortcuts,
   now: () => model.now,
   announcer: document.querySelector("#season-status"),
 });
@@ -234,6 +246,7 @@ const constellationToggle = bindConstellationToggle({
   announcer: document.querySelector("#constellation-status"),
   model,
   keyTarget: window,
+  shortcuts,
   now: () => model.now,
   bringNight: () => dayNight.toggle(),
 });

@@ -3,7 +3,7 @@
 // reveals the constellations. Spotted constellations are announced in a
 // polite live region.
 
-import { matchesShortcut } from "./shortcuts.js";
+import { createShortcutGate } from "./shortcuts.js";
 
 const TITLES = {
   day: "Wait for night to spot constellations",
@@ -16,7 +16,15 @@ export function spottedMessage(name) {
   return NO_ARTICLE.has(name) ? `You spotted ${name}` : `You spotted the ${name}`;
 }
 
-export function bindConstellationToggle({ button, announcer, model, keyTarget, now, bringNight }) {
+export function bindConstellationToggle({
+  button,
+  announcer,
+  model,
+  keyTarget,
+  now,
+  bringNight,
+  shortcuts = createShortcutGate(),
+}) {
   // Runs every frame from the loop, so it only touches the DOM on change.
   let lastState = null;
   function sync() {
@@ -44,7 +52,7 @@ export function bindConstellationToggle({ button, announcer, model, keyTarget, n
   }
 
   function onKeydown(event) {
-    if (matchesShortcut(event, "c")) toggle();
+    if (shortcuts.matches(event, "c")) toggle();
   }
 
   button.addEventListener("click", toggle);
