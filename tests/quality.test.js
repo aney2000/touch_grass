@@ -1,6 +1,20 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { chooseQuality, stepDown } from "../src/quality.js";
+import { chooseQuality, stepDown, stageOptionsFor } from "../src/quality.js";
+
+test("stageOptionsFor asks for the discrete GPU only on the high tier", () => {
+  const high = chooseQuality({ width: 1920, height: 1080, dpr: 1, hardwareConcurrency: 12 });
+  assert.deepEqual(stageOptionsFor(high), {
+    powerPreference: "high-performance",
+    msaa: 4,
+    bloomScale: 1,
+  });
+  assert.deepEqual(stageOptionsFor(stepDown(high)), {
+    powerPreference: "default",
+    msaa: 2,
+    bloomScale: 0.5,
+  });
+});
 
 const desktop = {
   width: 1920,

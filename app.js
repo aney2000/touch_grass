@@ -30,8 +30,8 @@ import { bindSeasonPicker } from "./src/ui/season-picker.js";
 import { createConstellations, createSkyPicker } from "./src/three/constellations.js";
 import { bindConstellationToggle } from "./src/ui/constellation-toggle.js";
 
-const COMPACT_SCREEN_PX = 700;
-const MAX_PIXEL_RATIO = 1.75;
+import { chooseQuality, stepDown, stageOptionsFor } from "./src/quality.js";
+import { createFrameGovernor } from "./src/frame-governor.js";
 
 const sceneElement = document.querySelector(".scene");
 const canvas = document.querySelector("#meadow");
@@ -44,7 +44,16 @@ const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 const model = new Scene({ prefersReducedMotion: reducedMotion.matches });
 const camera = createCamera();
-const compact = window.innerWidth < COMPACT_SCREEN_PX;
+let quality = chooseQuality({
+  width: window.innerWidth,
+  height: window.innerHeight,
+  dpr: window.devicePixelRatio,
+  hardwareConcurrency: navigator.hardwareConcurrency,
+  deviceMemory: navigator.deviceMemory,
+  reducedMotion: reducedMotion.matches,
+  coarsePointer: window.matchMedia("(pointer: coarse)").matches,
+});
+const governor = createFrameGovernor();
 
 // The world, painted back to front. Order is the only thing that matters here.
 const world = createWorld([
@@ -54,16 +63,16 @@ const world = createWorld([
   createMeteorShower(),
   createConstellations(),
   createTerrain(),
-  createGrove({ count: compact ? 16 : 22 }),
+  createGrove({ count: quality.groveTrees }),
   createTree(),
-  createGrass({ count: compact ? COUNTS.grassBladesCompact : COUNTS.grassBlades }),
+  createGrass({ count: quality.grassBlades }),
   createFireflyLights({ capacity: COUNTS.fireflies }),
-  createFallingParticles({ capacity: compact ? 250 : 600 }),
+  createFallingParticles({ capacity: quality.fallingCapacity }),
 ]);
 
 let stage;
 try {
-  stage = createStage(canvas, { scene: world.scene, camera });
+  stage = createStage(canvas, { scene: world.scene, camera, ...stageOptionsFor(quality) });
 } catch {
   // Without WebGL the CSS backdrop still shows a calm, static field.
   sceneElement.classList.add("scene--static");
@@ -71,25 +80,60 @@ try {
 
 createPointerInput({ canvas, sceneElement, model, pick: createGroundPicker(camera) });
 
-let pixelRatio = 1;
+let pixelRatio = quality.pixelRatio;
+let lastSize = "";
+let resizeQueued = false;
 
 function resize() {
+  resizeQueued = false;
+  // The canvas fills .scene (100svh); innerHeight would squash it on mobile.
   const bounds = sceneElement.getBoundingClientRect();
-  const width = bounds.width;
-  const height = Math.max(bounds.height, window.innerHeight);
-  pixelRatio = Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO);
+  const width = Math.round(bounds.width);
+  const height = Math.round(bounds.height);
+  const key = `${width}x${height}@${pixelRatio}`;
+  if (key === lastSize || width === 0 || height === 0) return;
+  lastSize = key;
   resizeCamera(camera, width, height);
   stage?.resize(width, height, pixelRatio);
 }
 
+function queueResize() {
+  if (resizeQueued) return;
+  resizeQueued = true;
+  window.requestAnimationFrame(resize);
+}
+
+function lowerQuality() {
+  const next = stepDown(quality);
+  if (next === quality) return;
+  quality = next;
+  pixelRatio = quality.pixelRatio;
+  stage?.setBloomScale(quality.bloom.scale);
+  resize();
+}
+
+let lastThemeColor = "";
 function updateThemeColor() {
-  themeColor.setAttribute(
-    "content",
-    mixHex(dayPalette.skyTop, nightPalette.skyTop, model.dayAmount),
-  );
+  const color = mixHex(dayPalette.skyTop, nightPalette.skyTop, model.dayAmount);
+  if (color === lastThemeColor) return;
+  lastThemeColor = color;
+  themeColor.setAttribute("content", color);
+}
+
+let lastFrameAt = null;
+let running = true;
+let framePending = false;
+
+function scheduleFrame() {
+  framePending = true;
+  window.requestAnimationFrame(frame);
 }
 
 function frame(now = 0) {
+  framePending = false;
+  if (!running) return;
+  if (lastFrameAt !== null && governor.sample(now - lastFrameAt, now)) lowerQuality();
+  lastFrameAt = now;
   model.advance(now);
   const snapshot = { ...model.frame(), pixelRatio };
   applyCameraPose(
@@ -104,7 +148,7 @@ function frame(now = 0) {
   clockView.render(model.clock());
   zenMode.update(now);
   constellationToggle.sync();
-  window.requestAnimationFrame(frame);
+  scheduleFrame();
 }
 
 // The button, or the N key anywhere, switches between day and night.
@@ -168,6 +212,19 @@ reducedMotion.addEventListener("change", (event) => {
   model.prefersReducedMotion = event.matches;
 });
 
-window.addEventListener("resize", resize);
+// A hidden tab renders nothing; on return, Scene caps the first delta at 48ms
+// so the meadow resumes without a jump.
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    running = false;
+    return;
+  }
+  if (running) return;
+  running = true;
+  lastFrameAt = null;
+  if (!framePending) scheduleFrame();
+});
+
+window.addEventListener("resize", queueResize);
 resize();
-window.requestAnimationFrame(frame);
+scheduleFrame();

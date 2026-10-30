@@ -66,6 +66,14 @@ export function chooseQuality(device) {
   return settingsFor(TIERS[index], dpr, pixelCap);
 }
 
+export function stageOptionsFor(quality) {
+  return {
+    powerPreference: quality.tier === "high" ? "high-performance" : "default",
+    msaa: quality.msaa,
+    bloomScale: quality.bloom.scale,
+  };
+}
+
 export function stepDown(quality) {
   const index = TIERS.indexOf(quality.tier);
   if (index <= 0) return quality;
