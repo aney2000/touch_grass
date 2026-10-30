@@ -36,6 +36,7 @@ import { bindSeasonPicker } from "./src/ui/season-picker.js";
 import { createConstellations, createSkyPicker } from "./src/three/constellations.js";
 import { bindConstellationToggle } from "./src/ui/constellation-toggle.js";
 import { createShortcutGate, bindShortcutToggle } from "./src/ui/shortcuts.js";
+import { bindHint } from "./src/ui/hint.js";
 
 import { chooseQuality, stepDown, stageOptionsFor } from "./src/quality.js";
 import { createFrameGovernor } from "./src/frame-governor.js";
@@ -193,7 +194,13 @@ function frame(now) {
   zenMode.update(now);
   constellationToggle.sync();
   constellationToggle.update();
+  hint.update(now);
 }
+
+const hint = bindHint({
+  element: document.querySelector(".scene-hint"),
+  now: performance.now(),
+});
 
 // One switch silences every single-key shortcut (WCAG 2.1.4).
 const shortcuts = createShortcutGate();

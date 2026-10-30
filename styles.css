@@ -594,6 +594,15 @@ html.no-js .scene-dock {
   font-weight: 700;
 }
 
+.scene-hint__touch {
+  display: none;
+}
+
+/* Set by script after the hint's time is up, so it also retires without motion. */
+.scene-hint--dismissed {
+  visibility: hidden;
+}
+
 .scene--night .scene-hint {
   background: rgb(32 51 47 / 72%);
   color: #e7eccf;
@@ -821,8 +830,12 @@ html.no-js .scene-dock {
 
 /* Touch screens have no keyboard to hint at: just invite a brush. */
 @media (hover: none) and (pointer: coarse) {
-  .scene-hint__keys {
+  .scene-hint__desktop {
     display: none;
+  }
+
+  .scene-hint__touch {
+    display: inline;
   }
 
   .shortcut-toggle {

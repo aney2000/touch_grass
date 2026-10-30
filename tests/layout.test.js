@@ -345,8 +345,35 @@ describe("mobile and touch", () => {
     assert.match(mediaBlock("(min-width: 1920px)"), /max-width/);
   });
 
-  it("hides the keyboard part of the hint on touch screens", () => {
-    assert.match(html, /<span class="scene-hint__keys">/);
-    assert.match(mediaBlock(TOUCH), /\.scene-hint__keys\s*\{[^}]*display:\s*none/);
+  it("swaps the keyboard hint for a touch hint on touch screens", () => {
+    const hint = elementBlock(/<p class="scene-hint"/, "p");
+    const text = (cls) =>
+      hint
+        .match(new RegExp(`<span class="${cls}"\\s*>([\\s\\S]*?)</span\\s*>`))[1]
+        .replace(/<[^>]+>/g, "")
+        .replace(/&middot;/g, "·")
+        .replace(/&ndash;/g, "–")
+        .replace(/\s+/g, " ")
+        .trim();
+    assert.equal(
+      text("scene-hint__desktop"),
+      "Brush the grass · 1–4 seasons · N night · tap a star after dark",
+    );
+    assert.equal(text("scene-hint__touch"), "Brush the grass · tap stars at night");
+    assert.match(ruleBody(".scene-hint__touch"), /display:\s*none/);
+    const touch = mediaBlock(TOUCH);
+    assert.match(touch, /\.scene-hint__desktop\s*\{[^}]*display:\s*none/);
+    assert.match(touch, /\.scene-hint__touch\s*\{[^}]*display:\s*inline/);
+  });
+
+  it("hides the hint once script marks it dismissed, whatever the motion preference", () => {
+    assert.match(ruleBody(".scene-hint--dismissed"), /visibility:\s*hidden/);
+  });
+
+  it("tells screen-reader visitors about seasons, constellations and tapping stars", () => {
+    const intro = html.match(/<p class="sr-only">([\s\S]*?)<\/p>/)[1].replace(/\s+/g, " ");
+    assert.match(intro, /1 to 4 keys/);
+    assert.match(intro, /C key/);
+    assert.match(intro, /tap a star/i);
   });
 });
