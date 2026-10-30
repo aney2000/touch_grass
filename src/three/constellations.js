@@ -4,7 +4,16 @@
 // injectable factory so headless tests need no canvas.
 
 import * as THREE from "three";
-import { layoutConstellations } from "../constellations.js";
+import { layoutConstellations, pickConstellation } from "../constellations.js";
+
+// Normalised device coordinates -> the constellation under them, or null.
+export function createSkyPicker(camera, threshold = 0.08) {
+  const point = new THREE.Vector3();
+  return ({ x, y }) => {
+    point.set(x, y, 0.5).unproject(camera).sub(camera.position).normalize();
+    return pickConstellation([point.x, point.y, point.z], threshold);
+  };
+}
 
 const RADIUS = 780;
 const LINE_OPACITY = 0.55;
@@ -71,7 +80,10 @@ export function createConstellations({ createLabel = canvasLabel, pixelRatio = 1
   const sizes = new Float32Array(all.length);
   const phases = new Float32Array(all.length);
   all.forEach((star, i) => {
-    positions.set(star.direction.map((v) => v * RADIUS), i * 3);
+    positions.set(
+      star.direction.map((v) => v * RADIUS),
+      i * 3,
+    );
     sizes[i] = sizeFor(star.magnitude);
     phases[i] = i * 2.399;
   });
@@ -102,8 +114,14 @@ export function createConstellations({ createLabel = canvasLabel, pixelRatio = 1
   for (const group of layout) {
     const points = new Float32Array(group.lines.length * 6);
     group.lines.forEach(([a, b], i) => {
-      points.set(group.stars[a].direction.map((v) => v * RADIUS), i * 6);
-      points.set(group.stars[b].direction.map((v) => v * RADIUS), i * 6 + 3);
+      points.set(
+        group.stars[a].direction.map((v) => v * RADIUS),
+        i * 6,
+      );
+      points.set(
+        group.stars[b].direction.map((v) => v * RADIUS),
+        i * 6 + 3,
+      );
     });
     const lineGeometry = new THREE.BufferGeometry();
     lineGeometry.setAttribute("position", new THREE.BufferAttribute(points, 3));

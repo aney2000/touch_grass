@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { createConstellations } from "../../src/three/constellations.js";
+import { createConstellations, createSkyPicker } from "../../src/three/constellations.js";
 import { CONSTELLATIONS } from "../../src/constellations.js";
 import { atmosphereAt } from "../../src/atmosphere.js";
 
@@ -20,6 +20,23 @@ function frame({ dayAmount = 1, reveal = 0, highlight = null, highlightAmount = 
     constellations: { visible: reveal > 0, reveal, highlight, highlightAmount },
   };
 }
+
+describe("createSkyPicker", () => {
+  it("turns a tap on a star into its constellation name", () => {
+    const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1000);
+    camera.updateMatrixWorld();
+    const star = CONSTELLATIONS.find((c) => c.name === "Orion").stars[3];
+    const world = new THREE.Vector3(
+      Math.cos(star.elevation) * Math.sin(star.azimuth),
+      Math.sin(star.elevation),
+      -Math.cos(star.elevation) * Math.cos(star.azimuth),
+    ).multiplyScalar(500);
+    const ndc = world.clone().project(camera);
+    const pick = createSkyPicker(camera);
+    assert.equal(pick({ x: ndc.x, y: ndc.y }), "Orion");
+    assert.equal(pick({ x: 0, y: -0.99 }), null);
+  });
+});
 
 describe("createConstellations", () => {
   it("builds stars, lines and one label per constellation", () => {
