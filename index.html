@@ -68,6 +68,17 @@
             <span class="zen-toggle__icon" aria-hidden="true"></span>
             <span>Zen</span>
           </button>
+          <button
+            class="dock-button constellation-toggle constellation-toggle--waiting"
+            id="constellation-toggle"
+            type="button"
+            aria-pressed="false"
+            aria-keyshortcuts="C"
+            title="Wait for night to spot constellations"
+          >
+            <span class="constellation-toggle__icon" aria-hidden="true"></span>
+            <span>Constellations</span>
+          </button>
           <div class="season-picker" role="group" aria-label="Season">
             <button
               class="dock-button season-button"
@@ -137,6 +148,7 @@
       </button>
       <p class="sr-only" id="zen-status" aria-live="polite"></p>
       <p class="sr-only" id="season-status" aria-live="polite"></p>
+      <p class="sr-only" id="constellation-status" aria-live="polite"></p>
     </main>
     <noscript
       >This little field needs JavaScript to move. It will be here when you're ready.</noscript

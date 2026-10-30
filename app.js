@@ -27,6 +27,8 @@ import { createClockView } from "./src/ui/clock-view.js";
 import { bindDayNightToggle } from "./src/ui/day-night-toggle.js";
 import { bindZenMode } from "./src/ui/zen-mode.js";
 import { bindSeasonPicker } from "./src/ui/season-picker.js";
+import { createConstellations, createSkyPicker } from "./src/three/constellations.js";
+import { bindConstellationToggle } from "./src/ui/constellation-toggle.js";
 
 const COMPACT_SCREEN_PX = 700;
 const MAX_PIXEL_RATIO = 1.75;
@@ -50,6 +52,7 @@ const world = createWorld([
   createLights(),
   createCloudLayer({ count: COUNTS.clouds }),
   createMeteorShower(),
+  createConstellations(),
   createTerrain(),
   createGrove({ count: compact ? 16 : 22 }),
   createTree(),
@@ -100,11 +103,12 @@ function frame(now = 0) {
   updateThemeColor();
   clockView.render(model.clock());
   zenMode.update(now);
+  constellationToggle.sync();
   window.requestAnimationFrame(frame);
 }
 
 // The button, or the N key anywhere, switches between day and night.
-bindDayNightToggle({
+const dayNight = bindDayNightToggle({
   button: document.querySelector("#scene-toggle"),
   label: document.querySelector(".scene-toggle__label"),
   sceneElement,
@@ -135,6 +139,29 @@ bindSeasonPicker({
   keyTarget: window,
   now: () => model.now,
   announcer: document.querySelector("#season-status"),
+});
+
+// The star button, or C, reveals the constellations (letting night fall by
+// day); tapping a constellation star at night outlines and names it.
+const constellationToggle = bindConstellationToggle({
+  button: document.querySelector("#constellation-toggle"),
+  announcer: document.querySelector("#constellation-status"),
+  model,
+  keyTarget: window,
+  now: () => model.now,
+  bringNight: () => dayNight.toggle(),
+});
+const pickSky = createSkyPicker(camera);
+canvas.addEventListener("click", (event) => {
+  if (!model.isNight) return;
+  const bounds = canvas.getBoundingClientRect();
+  const name = pickSky({
+    x: ((event.clientX - bounds.left) / bounds.width) * 2 - 1,
+    y: 1 - ((event.clientY - bounds.top) / bounds.height) * 2,
+  });
+  if (!name) return;
+  model.highlightConstellation(name, model.now);
+  constellationToggle.announce(name);
 });
 
 reducedMotion.addEventListener("change", (event) => {
