@@ -137,7 +137,7 @@ a {
   margin: 15px 0 0;
   color: var(--sky-ink);
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 58px;
+  font-size: clamp(38px, 4vw + 1rem, 84px);
   font-weight: 400;
   line-height: 1.05;
   text-shadow: var(--sky-ink-shadow);
@@ -327,7 +327,6 @@ a {
 
   .scene-title h1 {
     max-width: 310px;
-    font-size: 43px;
   }
 
   .scene-controls {
@@ -370,11 +369,73 @@ a {
   }
 }
 
-@media (max-width: 360px) {
-  .scene-title h1 {
-    font-size: 38px;
+/* Tablets: tighter insets than desktop, labels kept, the dock wraps upward. */
+@media (min-width: 601px) and (max-width: 1024px) {
+  .masthead,
+  .scene-controls {
+    right: max(24px, env(safe-area-inset-right));
+    left: max(24px, env(safe-area-inset-left));
   }
 
+  .masthead {
+    top: max(24px, env(safe-area-inset-top));
+  }
+
+  .scene-controls {
+    bottom: max(24px, env(safe-area-inset-bottom));
+    gap: 12px 18px;
+  }
+
+  .scene-dock {
+    row-gap: 8px;
+  }
+}
+
+/* Short landscape phones: lift the title, drop the hint, icon-only dock. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .masthead {
+    top: max(14px, env(safe-area-inset-top));
+  }
+
+  .scene-title {
+    top: 18%;
+  }
+
+  .scene-title h1 {
+    margin-top: 6px;
+    font-size: clamp(30px, 3vw + 1rem, 44px);
+  }
+
+  .scene-hint {
+    display: none;
+  }
+
+  .scene-controls {
+    bottom: max(14px, env(safe-area-inset-bottom));
+    gap: 8px 14px;
+  }
+
+  .dock-button {
+    min-height: 44px;
+    padding: 0 13px;
+  }
+
+  /* Seasons keep their aria-labels; the day/night label is its name, so stays. */
+  .season-button__label {
+    display: none;
+  }
+}
+
+/* Very large screens: keep the composition from drifting to the edges. */
+@media (min-width: 1920px) {
+  .masthead,
+  .scene-controls {
+    max-width: 1840px;
+    margin-inline: auto;
+  }
+}
+
+@media (max-width: 360px) {
   .masthead__note {
     max-width: 116px;
     text-align: right;

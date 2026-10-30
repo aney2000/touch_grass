@@ -180,6 +180,28 @@ describe("mobile and touch", () => {
     assert.match(mediaBlock("(hover: hover)"), /\.dock-button:hover/);
   });
 
+  it("sizes the title fluidly instead of with fixed breakpoints", () => {
+    assert.match(ruleBody(".scene-title h1"), /font-size:\s*clamp\(38px, 4vw \+ 1rem, 84px\)/);
+    assert.doesNotMatch(css, /h1\s*\{[^}]*font-size:\s*\d+px/);
+  });
+
+  it("gives tablets their own insets while keeping season labels", () => {
+    const tablet = mediaBlock("(min-width: 601px) and (max-width: 1024px)");
+    assert.match(tablet, /24px/);
+    assert.doesNotMatch(tablet, /season-button__label\s*\{[^}]*display:\s*none/);
+  });
+
+  it("compacts a short landscape phone: higher title, no hint, icon-only dock", () => {
+    const landscape = mediaBlock("(orientation: landscape) and (max-height: 500px)");
+    assert.match(landscape, /\.scene-title\s*\{[^}]*top:/);
+    assert.match(landscape, /\.scene-hint\s*\{[^}]*display:\s*none/);
+    assert.match(landscape, /\.season-button__label[^{]*\{[^}]*display:\s*none/);
+  });
+
+  it("caps the layout width on very large screens", () => {
+    assert.match(mediaBlock("(min-width: 1920px)"), /max-width/);
+  });
+
   it("hides the keyboard part of the hint on touch screens", () => {
     assert.match(html, /<span class="scene-hint__keys">/);
     assert.match(mediaBlock(TOUCH), /\.scene-hint__keys\s*\{[^}]*display:\s*none/);
