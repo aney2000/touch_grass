@@ -2,7 +2,14 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { Scene } from "../src/scene.js";
 import { atmosphereAt } from "../src/atmosphere.js";
-import { DAY_NIGHT_MS, REDUCED_MOTION_DAY_NIGHT_MS, COUNTS } from "../src/config.js";
+import { seasonBlendAt, seasonLook } from "../src/seasons.js";
+import {
+  DAY_NIGHT_MS,
+  REDUCED_MOTION_DAY_NIGHT_MS,
+  COUNTS,
+  SEASON_MS,
+  REDUCED_MOTION_SEASON_MS,
+} from "../src/config.js";
 
 function settle(scene, from, duration) {
   for (let now = from; now <= from + duration + 100; now += 16) scene.advance(now);
@@ -127,5 +134,60 @@ describe("Scene", () => {
     const scene = new Scene();
     scene.prefersReducedMotion = true;
     assert.ok(scene.frame().motionScale < 1);
+  });
+});
+
+describe("Scene seasons", () => {
+  it("starts in summer, the look closest to the classic meadow", () => {
+    const scene = new Scene();
+    scene.advance(0);
+    assert.equal(scene.season, "summer");
+    const { season } = scene.frame();
+    assert.equal(season.name, "summer");
+    assert.deepEqual(season.weights, seasonBlendAt(1));
+    assert.deepEqual(season.look, seasonLook(seasonBlendAt(1)));
+  });
+
+  it("morphs to a new season over SEASON_MS, blending both on the way", () => {
+    const scene = new Scene();
+    scene.advance(0);
+    scene.setSeason("autumn", 0);
+    assert.equal(scene.season, "autumn");
+    scene.advance(SEASON_MS / 2);
+    const midway = scene.frame().season.weights;
+    assert.ok(midway.summer > 0 && midway.autumn > 0);
+    settle(scene, SEASON_MS / 2, SEASON_MS);
+    assert.equal(scene.frame().season.weights.autumn, 1);
+    assert.equal(scene.frame().season.name, "autumn");
+  });
+
+  it("goes from winter straight into spring rather than back through the year", () => {
+    const scene = new Scene({ prefersReducedMotion: true });
+    scene.setSeason("winter", 0);
+    settle(scene, 0, REDUCED_MOTION_SEASON_MS);
+    scene.setSeason("spring", 2000);
+    scene.advance(2000 + REDUCED_MOTION_SEASON_MS / 2);
+    const { weights } = scene.frame().season;
+    assert.equal(weights.summer + weights.autumn, 0);
+    assert.ok(weights.winter > 0 && weights.spring > 0);
+  });
+
+  it("finishes a reduced-motion morph within REDUCED_MOTION_SEASON_MS", () => {
+    const scene = new Scene({ prefersReducedMotion: true });
+    scene.setSeason("spring", 0);
+    scene.advance(REDUCED_MOTION_SEASON_MS);
+    assert.equal(scene.frame().season.weights.spring, 1);
+  });
+
+  it("tints the grass with the season's colours", () => {
+    const scene = new Scene({ prefersReducedMotion: true });
+    scene.setSeason("winter", 0);
+    scene.advance(REDUCED_MOTION_SEASON_MS);
+    const { atmosphere, season } = scene.frame();
+    assert.deepEqual(atmosphere.grassTip, season.look.grassTip);
+  });
+
+  it("rejects an unknown season with a RangeError", () => {
+    assert.throws(() => new Scene().setSeason("monsoon", 0), RangeError);
   });
 });

@@ -13,7 +13,23 @@ import {
   SCENE_SEED,
   DAY_NIGHT_MS,
   REDUCED_MOTION_DAY_NIGHT_MS,
+  SEASON_MS,
+  REDUCED_MOTION_SEASON_MS,
 } from "./config.js";
+import {
+  seasonPosition,
+  nearestSeasonTarget,
+  seasonBlendAt,
+  seasonLook,
+  dominantSeason,
+} from "./seasons.js";
+
+const DEFAULT_SEASON = "summer";
+
+function seasonSnapshot(position) {
+  const weights = seasonBlendAt(position);
+  return { name: dominantSeason(weights), weights, look: seasonLook(weights) };
+}
 
 const MAX_FRAME_DELTA_MS = 48;
 const REDUCED_MOTION_SCALE = 0.25;
@@ -28,7 +44,11 @@ export class Scene {
     this.elapsed = 0;
     this.motionClock = 0;
     this.dayAmount = 0;
-    this.atmosphere = atmosphereAt(0);
+    this.targetSeason = DEFAULT_SEASON;
+    this.seasonTween = createTween(seasonPosition(DEFAULT_SEASON));
+    this.seasonPositionValue = seasonPosition(DEFAULT_SEASON);
+    this.seasonState = seasonSnapshot(this.seasonPositionValue);
+    this.atmosphere = atmosphereAt(0, this.seasonState.look);
 
     this.targetNight = 0;
     this.tween = createTween(0);
@@ -66,7 +86,10 @@ export class Scene {
 
     const duration = this.prefersReducedMotion ? REDUCED_MOTION_DAY_NIGHT_MS : DAY_NIGHT_MS;
     this.dayAmount = this.tween.valueAt(now, duration);
-    this.atmosphere = atmosphereAt(this.dayAmount);
+    const seasonDuration = this.prefersReducedMotion ? REDUCED_MOTION_SEASON_MS : SEASON_MS;
+    this.seasonPositionValue = this.seasonTween.valueAt(now, seasonDuration);
+    this.seasonState = seasonSnapshot(this.seasonPositionValue);
+    this.atmosphere = atmosphereAt(this.dayAmount, this.seasonState.look);
 
     pruneGusts(this.gusts, now);
     this.touch = followTouch(this.touch, this.touchInput, delta);
@@ -83,6 +106,18 @@ export class Scene {
     this.targetNight = this.targetNight ? 0 : 1;
     this.tween.retarget(this.targetNight, this.dayAmount, now);
     return this.targetNight;
+  }
+
+  get season() {
+    return this.targetSeason;
+  }
+
+  // Morph to a season, easing from the current blend the shortest way round.
+  setSeason(name, now) {
+    const target = nearestSeasonTarget(this.seasonPositionValue, name);
+    this.targetSeason = name;
+    this.seasonTween.retarget(target, this.seasonPositionValue, now);
+    return name;
   }
 
   pushGust(point, strength, now) {
@@ -110,6 +145,7 @@ export class Scene {
       seconds: this.elapsed / 1000,
       dayAmount: this.dayAmount,
       atmosphere: this.atmosphere,
+      season: this.seasonState,
       motionScale: this.motionScale,
       pointer: this.pointer,
       fireflies: this.fireflies,

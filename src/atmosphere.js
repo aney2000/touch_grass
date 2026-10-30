@@ -47,10 +47,21 @@ function along([from, to], amount) {
   return from + (to - from) * amount;
 }
 
-export function atmosphereAt(dayAmount) {
+// Grass under a season: the season's midday colour, dimmed at night by the same
+// per-channel ratio the classic palette uses, so summer matches the old look.
+function seasonalGrass(key, seasonLook, amount) {
+  const daylight = seasonLook[key];
+  const moonlit = daylight.map((value, index) => (value * NIGHT[key][index]) / DAY[key][index]);
+  return mixRgb(daylight, moonlit, amount);
+}
+
+export function atmosphereAt(dayAmount, seasonLook = null) {
   const amount = clamp(dayAmount, 0, 1);
   const twilight = twilightAmount(amount);
-  const mix = (key) => mixRgb(DAY[key], NIGHT[key], amount);
+  const mix = (key) =>
+    seasonLook && seasonLook[key]
+      ? seasonalGrass(key, seasonLook, amount)
+      : mixRgb(DAY[key], NIGHT[key], amount);
 
   const skyHorizon = mixRgb(mix("horizon"), TWILIGHT.horizon, twilight * 0.8);
   const sunVisibility = 1 - smoothstep(0.55, 0.95, amount);

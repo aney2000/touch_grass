@@ -103,3 +103,27 @@ describe("atmosphereAt", () => {
     assert.deepEqual(atmosphereAt(3), atmosphereAt(1));
   });
 });
+
+describe("atmosphereAt with a season look", () => {
+  const winter = { grassTip: [0.8, 0.84, 0.82], grassBase: [0.5, 0.58, 0.53] };
+
+  it("uses the season's grass colours as they are in full daylight", () => {
+    const atmosphere = atmosphereAt(0, winter);
+    assert.deepEqual(atmosphere.grassTip, winter.grassTip);
+    assert.deepEqual(atmosphere.grassBase, winter.grassBase);
+  });
+
+  it("darkens the season's grass toward moonlit tones at night but keeps it distinct", () => {
+    const night = atmosphereAt(1, winter);
+    const plainNight = atmosphereAt(1);
+    assert.ok(night.grassTip[0] < winter.grassTip[0]);
+    assert.notDeepEqual(night.grassTip, plainNight.grassTip);
+  });
+
+  it("leaves every other colour untouched", () => {
+    const { grassTip, grassBase, ...rest } = atmosphereAt(0.4, winter);
+    const { grassTip: t, grassBase: b, ...plain } = atmosphereAt(0.4);
+    assert.deepEqual(rest, plain);
+    assert.ok(grassTip && grassBase && t && b);
+  });
+});
